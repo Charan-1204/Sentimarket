@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentiMarket | Create Account</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0d1117;
+            --card: #161b27;
+            --border: #21293a;
+            --green: #22c55e;
+            --orange: #f97316;
+            --red: #ef4444;
+            --muted: #6b7280;
+            --text: #e2e8f0;
+            --dim: #94a3b8;
+            --input: #1c2333;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 60px 24px 40px;
+            /* top pad accounts for ticker */
+        }
+
+        /* ── CANVAS ── */
+        #bgCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── TICKER ── */
+        .ticker-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: #0a0f1a;
+            border-bottom: 1px solid var(--border);
+            height: 36px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .ticker-track {
+            display: flex;
+            align-items: center;
+            animation: tickerScroll 28s linear infinite;
+            white-space: nowrap;
+        }
+
+        .ticker-bar:hover .ticker-track {
+            animation-play-state: paused;
+        }
+
+        @keyframes tickerScroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .tick-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 28px;
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--dim);
+            border-right: 1px solid #1e2a3a;
+        }
+
+        .tick-item .sym {
+            color: var(--text);
+        }
+
+        .tick-item .up {
+            color: var(--green);
+        }
+
+        .tick-item .dn {
+            color: var(--red);
+        }
+
+        /* ── PAGE CONTENT ── */
+        .page-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            animation: fadeUp .5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── LOGO ── */
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--green);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .logo-badge {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--green);
+            background: rgba(34, 197, 94, .12);
+            padding: 2px 7px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 197, 94, .3);
+        }
+
+        /* ── MAIN CARD ── */
+        @keyframes cardGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 32px 80px rgba(0, 0, 0, .7), 0 0 20px rgba(34, 197, 94, .10), 0 0 0 1px rgba(34, 197, 94, .07);
+            }
+
+            50% {
+                box-shadow: 0 32px 80px rgba(0, 0, 0, .7), 0 0 40px rgba(34, 197, 94, .24), 0 0 0 1px rgba(34, 197, 94, .20);
+            }
+        }
+
+        .auth-card {
+            background: rgba(22, 27, 39, .95);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(34, 197, 94, .18);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 620px;
+            animation: cardGlow 4s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        /* ═══════════════════════════════════
+           SECTION 1 – VALUE PROPOSITION
+        ════════════════════════════════════ */
+        .section-1 {
+            padding: 32px 32px 28px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(34, 197, 94, .04) 0%, transparent 60%);
+        }
+
+        .s1-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .s1-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.3;
+            margin-bottom: 6px;
+        }
+
+        .s1-sub {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .badges {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--dim);
+        }
+
+        .badge-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .bi-green {
+            background: rgba(34, 197, 94, .15);
+            color: var(--green);
+        }
+
+        .bi-orange {
+            background: rgba(249, 115, 22, .15);
+            color: var(--orange);
+        }
+
+        .bi-blue {
+            background: rgba(99, 179, 237, .15);
+            color: #63b3ed;
+        }
+
+        /* Right side — animated chart preview */
+        .s1-right {
+            position: relative;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-preview {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-preview canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .glow-dot {
+            position: absolute;
+            bottom: 28px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, .5);
+            animation: pulseDot 2s ease infinite;
+        }
+
+        @keyframes pulseDot {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, .5);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        .ai-badge {
+            position: absolute;
+            top: 6px;
+            right: 0;
+            background: rgba(34, 197, 94, .1);
+            border: 1px solid rgba(34, 197, 94, .3);
+            border-radius: 6px;
+            padding: 4px 9px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--green);
+            letter-spacing: .4px;
+        }
+
+        /* ═══════════════════════════════════
+           SECTION 2 – FORM
+        ════════════════════════════════════ */
+        .section-2 {
+            padding: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-label-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 20px;
+        }
+
+        .section-num {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(34, 197, 94, .15);
+            border: 1px solid rgba(34, 197, 94, .3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dim);
+            margin-bottom: 7px;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 12px 14px 12px 40px;
+            color: var(--text);
+            font-size: 13px;
+            font-family: var(--sans);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .10);
+        }
+
+        input::placeholder {
+            color: var(--muted);
+        }
+
+        /* Password strength */
+        .strength-wrap {
+            margin-top: 8px;
+        }
+
+        .strength-bar {
+            display: flex;
+            gap: 4px;
+        }
+
+        .seg {
+            height: 3px;
+            flex: 1;
+            border-radius: 2px;
+            background: var(--border);
+            transition: background .3s;
+        }
+
+        .seg.weak {
+            background: var(--red);
+        }
+
+        .seg.medium {
+            background: var(--orange);
+        }
+
+        .seg.strong {
+            background: var(--green);
+        }
+
+        .strength-txt {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 5px;
+        }
+
+        /* Terms */
+        .terms-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .terms-row input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: var(--green);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .terms-row a {
+            color: var(--green);
+            text-decoration: none;
+        }
+
+        .terms-row a:hover {
+            text-decoration: underline;
+        }
+
+        /* ═══════════════════════════════════
+           SECTION 3 – ACTION
+        ════════════════════════════════════ */
+        .section-3 {
+            padding: 28px 32px 32px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(90deg, #16a34a 0%, #22c55e 50%, #4ade80 100%);
+            color: #000;
+            border: none;
+            border-radius: 9px;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: opacity .15s, transform .1s, box-shadow .25s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: .2px;
+        }
+
+        .btn-submit:hover {
+            opacity: .94;
+            box-shadow: 0 0 28px rgba(34, 197, 94, .4), 0 4px 14px rgba(0, 0, 0, .4);
+        }
+
+        .btn-submit:active {
+            transform: scale(.98);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 22px 0;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .btn-social {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 12px;
+            color: var(--dim);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .btn-social:hover {
+            background: #1e2737;
+            border-color: #374151;
+            color: var(--text);
+        }
+
+        .signin-note {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .signin-note a {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signin-note a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 560px) {
+            .s1-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .s1-right {
+                height: 120px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .section-1,
+            .section-2,
+            .section-3 {
+                padding: 24px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Ticker -->
+    <div class="ticker-bar">
+        <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+
+    <div class="page-content">
+        <!-- Logo -->
+        <div class="logo-wrap">
+            <div class="logo-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                </svg>
+            </div>
+            <span class="logo-text">SentiMarket</span>
+            <span class="logo-badge">PRO</span>
+        </div>
+
+        <!-- Main Card -->
+        <div class="auth-card">
+
+            <!-- ═══ SECTION 1 – VALUE PROPOSITION ═══ -->
+            <div class="section-1">
+                <div class="s1-grid">
+                    <!-- Left -->
+                    <div class="s1-left">
+                        <div class="s1-title">Create your<br>account</div>
+                        <div class="s1-sub">Start trading with AI-powered<br>sentiment insights</div>
+                        <div class="badges">
+                            <div class="badge-row"><span class="badge-icon bi-green">✓</span> Real-time Hype Score</div>
+                            <div class="badge-row"><span class="badge-icon bi-orange">⚡</span> AI Trade Signals</div>
+                            <div class="badge-row"><span class="badge-icon bi-blue">📊</span> Candlestick Charts</div>
+                            <div class="badge-row"><span class="badge-icon bi-green">✓</span> Live Feed</div>
+                        </div>
+                    </div>
+                    <!-- Right – animated mini chart -->
+                    <div class="s1-right">
+                        <div class="chart-preview">
+                            <canvas id="previewChart"></canvas>
+                            <div class="glow-dot"></div>
+                            <div class="ai-badge">● AI LIVE</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ SECTION 2 – FORM ═══ -->
+            <div class="section-2">
+                <div class="section-label-row">
+                    <span class="section-num">2</span>
+                    Account Details
+                </div>
+
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <!-- Row 1: Name -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <div class="input-wrap">
+                                <span class="input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg></span>
+                                <input type="text" placeholder="John" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <div class="input-wrap">
+                                <span class="input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg></span>
+                                <input type="text" placeholder="Doe" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Email -->
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                    <polyline points="22,6 12,13 2,6" />
+                                </svg></span>
+                            <input type="email" placeholder="trader@example.com" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Password -->
+                    <div class="form-group">
+                        <label>Password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg></span>
+                            <input type="password" id="pwdInput" placeholder="Min. 8 characters" required
+                                oninput="checkStrength(this.value)">
+                        </div>
+                        <div class="strength-wrap">
+                            <div class="strength-bar">
+                                <div class="seg" id="s1"></div>
+                                <div class="seg" id="s2"></div>
+                                <div class="seg" id="s3"></div>
+                                <div class="seg" id="s4"></div>
+                            </div>
+                            <div class="strength-txt" id="strengthLabel">Enter a password</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Confirm -->
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <div class="input-wrap">
+                            <span class="input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg></span>
+                            <input type="password" placeholder="Repeat password" required>
+                        </div>
+                    </div>
+
+                    <!-- Terms -->
+                    <div class="terms-row">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms" style="margin:0;font-weight:400">
+                            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ═══ SECTION 3 – ACTION ═══ -->
+            <div class="section-3">
+                <div class="section-label-row">
+                    <span class="section-num">3</span>
+                    Get Started
+                </div>
+
+                <button class="btn-submit" onclick="document.getElementById('registerForm').requestSubmit()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                    </svg>
+                    Create Account &amp; Start Trading
+                </button>
+
+                <div class="divider">OR</div>
+
+                <button class="btn-social">
+                    <svg width="16" height="16" viewBox="0 0 24 24">
+                        <path fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Sign up with Google
+                </button>
+
+                <div class="signin-note">
+                    Already have an account? <a href="login.html">Sign In</a>
+                </div>
+            </div>
+
+        </div><!-- /auth-card -->
+    </div><!-- /page-content -->
+
+    <script>
+        // ── TICKER ──
+        const coins = [
+            { sym: 'BTC', price: '$67,420', chg: '+2.14%', up: true },
+            { sym: 'ETH', price: '$3,820', chg: '+1.87%', up: true },
+            { sym: 'DOGE', price: '$0.1465', chg: '+3.93%', up: true },
+            { sym: 'SOL', price: '$143.90', chg: '-0.72%', up: false },
+            { sym: 'PEPE', price: '$0.0000156', chg: '+5.41%', up: true },
+            { sym: 'AVAX', price: '$39.71', chg: '-7.13%', up: false },
+            { sym: 'BNB', price: '$598.40', chg: '+0.95%', up: true },
+            { sym: 'ADA', price: '$0.4821', chg: '-1.32%', up: false },
+            { sym: 'MATIC', price: '$0.7634', chg: '+2.55%', up: true },
+            { sym: 'SHIB', price: '$0.0000227', chg: '+4.21%', up: true },
+        ];
+        (function buildTicker() {
+            const track = document.getElementById('tickerTrack');
+            const all = [...coins, ...coins];
+            track.innerHTML = all.map(c => `
+        <span class="tick-item">
+            <span class="sym">${c.sym}</span>
+            <span class="${c.up ? 'up' : 'dn'}">${c.up ? '▲' : '▼'} ${c.price}</span>
+            <span class="${c.up ? 'up' : 'dn'}">${c.chg}</span>
+        </span>`).join('');
+        })();
+        setInterval(() => {
+            document.querySelectorAll('.tick-item').forEach((el, i) => {
+                const c = coins[i % coins.length];
+                const jitter = (Math.random() - 0.49) * 0.002, up = jitter > 0;
+                const pct = (jitter * 500).toFixed(2);
+                const spans = el.querySelectorAll('.up,.dn');
+                if (spans[0]) { spans[0].className = up ? 'up' : 'dn'; spans[0].textContent = (up ? '▲ ' : '▼ ') + c.price; }
+                if (spans[1]) { spans[1].className = up ? 'up' : 'dn'; spans[1].textContent = (up ? '+' : '') + pct + '%'; }
+            });
+        }, 3000);
+
+        // ── PARTICLES ──
+        (function () {
+            const cv = document.getElementById('bgCanvas'), ctx = cv.getContext('2d');
+            let W, H, pts = [];
+            function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+            addEventListener('resize', resize); resize();
+            function P() { this.reset(); }
+            P.prototype.reset = function () {
+                this.x = Math.random() * W; this.y = Math.random() * H;
+                this.r = Math.random() * 1.4 + .3;
+                this.vx = (Math.random() - .5) * .28; this.vy = (Math.random() - .5) * .28;
+                this.a = Math.random() * 0.63 + 0.18;
+                this.col = Math.random() > .7 ? '34,197,94' : '90,110,150';
+            };
+            P.prototype.move = function () {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+            };
+            for (let i = 0; i < 80; i++) pts.push(new P());
+            (function draw() {
+                ctx.clearRect(0, 0, W, H);
+                for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+                    const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y, d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 110) { ctx.beginPath(); ctx.strokeStyle = `rgba(34,197,94,${.07 * (1 - d / 110)})`; ctx.lineWidth = .5; ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y); ctx.stroke(); }
+                }
+                pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = `rgba(${p.col},${p.a})`; ctx.fill(); p.move(); });
+                requestAnimationFrame(draw);
+            })();
+        })();
+
+        // ── SECTION 1 ANIMATED CHART ──
+        (function () {
+            const cv = document.getElementById('previewChart');
+            if (!cv) return;
+            const ctx = cv.getContext('2d');
+            const parent = cv.parentElement;
+            let prices = [], frame = 0;
+            // Speed control: 1.0 = full speed, 0.7 = 30% slower
+            const SPEED = 0.5;
+            let accumulator = 0;
+
+            function resize() {
+                cv.width = parent.clientWidth || 200;
+                cv.height = parent.clientHeight || 130;
+                prices = [];
+                let p = 0.145;
+                for (let i = 0; i < 60; i++) { p += (Math.random() - .46) * .003; prices.push(Math.max(.12, p)); }
+            }
+            resize();
+            addEventListener('resize', resize);
+
+            function draw() {
+                const W = cv.width, H = cv.height;
+                ctx.clearRect(0, 0, W, H);
+
+                // Only add a new price point when accumulator reaches 1
+                accumulator += SPEED;
+                if (accumulator >= 1) {
+                    accumulator -= 1;
+                    const last = prices[prices.length - 1];
+                    const next = Math.max(.12, last + (Math.random() - .46) * .003);
+                    prices.push(next); if (prices.length > 80) prices.shift();
+                }
+
+                const min = Math.min(...prices), max = Math.max(...prices);
+                const range = max - min || 0.01;
+                const pad = 12;
+
+                function x(i) { return pad + (i / (prices.length - 1)) * (W - pad * 2); }
+                function y(v) { return H - pad - ((v - min) / range) * (H - pad * 2); }
+
+                // Gradient fill
+                const grad = ctx.createLinearGradient(0, 0, 0, H);
+                grad.addColorStop(0, 'rgba(34,197,94,.25)');
+                grad.addColorStop(1, 'rgba(34,197,94,.01)');
+
+                ctx.beginPath();
+                ctx.moveTo(x(0), y(prices[0]));
+                for (let i = 1; i < prices.length; i++) {
+                    const cx1 = (x(i - 1) + x(i)) / 2, cy1 = y(prices[i - 1]);
+                    const cx2 = (x(i - 1) + x(i)) / 2, cy2 = y(prices[i]);
+                    ctx.bezierCurveTo(cx1, cy1, cx2, cy2, x(i), y(prices[i]));
+                }
+                ctx.lineTo(x(prices.length - 1), H); ctx.lineTo(x(0), H);
+                ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+
+                // Line
+                ctx.beginPath();
+                ctx.moveTo(x(0), y(prices[0]));
+                for (let i = 1; i < prices.length; i++) {
+                    const cx1 = (x(i - 1) + x(i)) / 2, cy1 = y(prices[i - 1]);
+                    const cx2 = (x(i - 1) + x(i)) / 2, cy2 = y(prices[i]);
+                    ctx.bezierCurveTo(cx1, cy1, cx2, cy2, x(i), y(prices[i]));
+                }
+                ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 1.8; ctx.stroke();
+
+                // Last dot
+                const lx = x(prices.length - 1), ly = y(prices[prices.length - 1]);
+                ctx.beginPath(); ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#22c55e'; ctx.fill();
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+
+        // ── STRENGTH ──
+        function checkStrength(val) {
+            const segs = ['s1', 's2', 's3', 's4'].map(id => document.getElementById(id));
+            const label = document.getElementById('strengthLabel');
+            segs.forEach(s => s.className = 'seg');
+            if (!val) { label.textContent = 'Enter a password'; label.style.color = ''; return; }
+            let sc = 0;
+            if (val.length >= 8) sc++; if (/[A-Z]/.test(val)) sc++;
+            if (/[0-9]/.test(val)) sc++; if (/[^A-Za-z0-9]/.test(val)) sc++;
+            const cls = sc <= 1 ? 'weak' : sc <= 3 ? 'medium' : 'strong';
+            const lbl = sc <= 1 ? '⚠ Weak' : sc <= 3 ? '~ Medium' : '✓ Strong';
+            const col = sc <= 1 ? '#ef4444' : sc <= 3 ? '#eab308' : '#22c55e';
+            for (let i = 0; i < sc; i++) segs[i].classList.add(cls);
+            label.textContent = lbl; label.style.color = col;
+        }
+
+        // ── REGISTER ──
+        function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.querySelector('.btn-submit');
+            btn.textContent = 'Creating account...'; btn.disabled = true;
+            setTimeout(() => { window.location.href = 'index.html'; }, 1400);
+        }
+    </script>
+    <script src="cursor.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', () => { if (window.smCursor) smCursor.enable(); });</script>
+</body>
+
+</html>

@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SentiMarket — Broker Insights</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="cursor.js"></script>
+
+<!-- React + Babel + Framer Motion for Analysis Panel -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+/* ══════════════════════════════════════════════════════
+   SentiMarket — Broker Insights
+   Unified with Dashboard design system (style.css tokens)
+══════════════════════════════════════════════════════ */
+:root {
+  /* Exact dashboard tokens */
+  --bg:       #0d1117;
+  --bg-card:  #161b27;
+  --bg-input: #1c2333;
+  --border:   #21293a;
+  --green:    #22c55e;
+  --green-dim:rgba(34,197,94,.15);
+  --border-g: rgba(34,197,94,.3);
+  --orange:   #f97316;
+  --yellow:   #eab308;
+  --red:      #ef4444;
+  --muted:    #6b7280;
+  --text:     #e2e8f0;
+  --text-dim: #94a3b8;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Inter', sans-serif;
+  --r:        8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+/* ── Page entry — identical to dashboard pageIn ── */
+@keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 15px rgba(34,197,94,0.2)}50%{box-shadow:0 0 30px rgba(34,197,94,0.6)}}
+.page-transitioning {
+  transition: opacity 0.4s ease-in-out, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  opacity: 0 !important;
+  transform: scale(1.03) !important;
+  pointer-events: none;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+@keyframes countUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sigPulse{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes chartLineIn{from{stroke-dashoffset:1000}to{stroke-dashoffset:0}}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:13px;
+  min-height:100vh;
+  overflow-x:hidden;
+  animation:pageIn .28s ease both;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Subtle grid overlay — same as dashboard body::before */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(34,197,94,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,197,94,.018) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2d3748;border-radius:2px}
+
+/* ─── HEADER ─── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    background: #0d1420;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Bookmark button */
+.hbtn-bookmark {
+    color: var(--muted);
+}
+
+.hbtn-bookmark.bookmarked {
+    color: var(--green) !important;
+}
+
+.hbtn-bookmark.bookmarked svg {
+    fill: var(--green);
+    stroke: var(--green);
+}
+
+/* Pipe separator between button groups */
+.hbtn-sep {
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Settings button */
+.hbtn-settings {
+    color: var(--muted);
+    transition: color .15s, transform .2s;
+}
+
+.hbtn-settings:hover {
+    color: var(--text);
+}
+
+.hbtn-settings:hover svg {
+    animation: spinOnce .5s ease;
+}
+
+@keyframes spinOnce {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(90deg);
+    }
+}
+
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.search-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--text);
+    min-width: 120px;
+    cursor: pointer;
+}
+
+.search-val {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.search-label {
+    font-size: 11px;
+    letter-spacing: .5px;
+}
+
+.hbtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all .15s;
+    white-space: nowrap;
+    font-family: var(--sans);
+}
+
+.hbtn:hover {
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
+}
+
+.hbtn-star {
+    color: var(--yellow);
+}
+
+.hbtn.icon-only {
+    padding: 5px 7px;
+}
+
+/* ─── SUBNAV ─── */
+.subnav {
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+    background: #060000;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.snav-link {
+    display: block;
+    padding: 10px 16px 10px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    letter-spacing: .5px;
+    transition: all .15s;
+    margin-right: 16px;
+}
+
+.snav-link.active {
+    color: var(--text);
+    border-bottom-color: var(--green);
+}
+
+/* Misc inherited header styles from app */
+kbd {
+    background: rgba(255,255,255,.1);
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-family: var(--mono);
+    color: #fff;
+}
+.market-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.2);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    font-family: var(--mono);
+    letter-spacing: .5px;
+}
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+.user-avatar-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 8px 2px 2px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.user-avatar-pill:hover {
+    background: rgba(255,255,255,.06);
+}
+.user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    background: var(--green);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+.user-avatar-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+}
+.notif-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 10px;
+    margin-left: 2px;
+}
+.kbd-help { display: flex; align-items: center; font-size: 10px; color: var(--muted); }
+
+/* ══ MAIN ══ */
+main{
+  position:relative;z-index:1;
+  max-width:1440px;margin:0 auto;
+  padding:20px 16px 60px;
+}
+
+/* ══ HERO ══ */
+.hero{margin-bottom:16px}
+.hero h1{
+  font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1.1;margin-bottom:6px;
+}
+.hero h1 span{
+  background:linear-gradient(90deg,var(--green),#06b6d4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero p{color:var(--text-dim);font-size:12px;font-weight:400}
+
+/* ══ KPI CARDS — exact dashboard kpi-card style ══ */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:16px;
+}
+.kpi-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:9px 12px;
+  position:relative;overflow:hidden;
+  transition:border-color .2s,transform .2s,box-shadow .2s;
+  cursor:default;
+}
+.kpi-card:hover{
+  border-color:rgba(34,197,94,.25);
+  transform:translateY(-1px);
+  box-shadow:0 4px 20px rgba(0,0,0,.35),0 0 0 1px rgba(34,197,94,.06);
+}
+.kpi-label{
+  font-size:10px;font-weight:600;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+}
+.kpi-value{
+  font-size:28px;font-weight:700;font-family:var(--mono);
+  color:var(--green);line-height:1;margin-bottom:4px;
+  text-shadow:0 0 18px rgba(34,197,94,.25);
+}
+.kpi-sub{
+  font-size:11px;color:var(--muted);
+  display:flex;align-items:center;gap:3px;
+}
+.kpi-sub .up{color:var(--green);font-size:10px}
+
+/* ══ FILTER ROW ══ */
+.filter-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;flex-wrap:wrap;gap:8px;
+}
+.filter-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.filter-tab{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 14px;
+  font-size:11px;font-weight:600;font-family:var(--sans);
+  border-radius:4px;
+  border:1px solid var(--border);
+  background:transparent;color:var(--muted);
+  cursor:pointer;transition:all .15s;
+  letter-spacing:.3px;
+}
+.filter-tab:hover{border-color:var(--muted);color:var(--text-dim)}
+.filter-tab.active{
+  background:var(--green-dim);
+  border-color:var(--border-g);
+  color:var(--green);
+}
+.filter-tab .tab-icon{font-size:11px}
+.broker-count{
+  font-size:11px;font-weight:600;color:var(--green);
+  background:var(--green-dim);border:1px solid var(--border-g);
+  padding:4px 10px;border-radius:4px;
+  font-family:var(--mono);
+}
+
+/* ══ SECTION TITLE — matches dashboard section-label ══ */
+.section-title{
+  font-size:10px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-title::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--border),transparent);
+}
+
+/* ══ BROKER GRID ══ */
+.broker-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:8px;
+}
+
+/* ══ BROKER CARD — matches dashboard kpi-card / bot-card depth ══ */
+.broker-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:12px;
+  display:flex;flex-direction:column;gap:9px;
+  cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),border-color .2s,box-shadow .2s;
+  opacity:0;transform:translateY(16px);
+  animation:fadeUp .45s ease forwards;
+}
+/* Top inner highlight — matches dashboard card inset shimmer */
+.broker-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);
+  pointer-events:none;
+}
+/* Diagonal gloss — matches dashboard card feel */
+.broker-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.018) 0%,transparent 50%);
+  pointer-events:none;
+}
+.broker-card:nth-child(1){animation-delay:.03s}
+.broker-card:nth-child(2){animation-delay:.07s}
+.broker-card:nth-child(3){animation-delay:.11s}
+.broker-card:nth-child(4){animation-delay:.15s}
+.broker-card:nth-child(5){animation-delay:.19s}
+.broker-card:nth-child(6){animation-delay:.23s}
+.broker-card:nth-child(7){animation-delay:.27s}
+.broker-card:nth-child(8){animation-delay:.31s}
+.broker-card:hover{
+  transform:translateY(-3px);
+  border-color:rgba(34,197,94,.22);
+  box-shadow:
+    0 0 0 1px rgba(34,197,94,.08),
+    0 8px 28px rgba(0,0,0,.45),
+    0 0 20px rgba(34,197,94,.06);
+}
+
+/* Card header */
+.card-header{display:flex;align-items:flex-start;justify-content:space-between}
+.broker-identity{display:flex;align-items:center;gap:9px}
+.broker-avatar{
+  width:36px;height:36px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;flex-shrink:0;letter-spacing:.3px;
+  border:1px solid rgba(255,255,255,.06);
+}
+.broker-name{font-size:13px;font-weight:600;line-height:1.2;color:var(--text)}
+.broker-category{
+  font-size:10px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;margin-top:2px;
+}
+
+/* ── Signal badge — exact dashboard signal style ── */
+.signal-badge{
+  padding:3px 8px;border-radius:4px;
+  font-size:10px;font-weight:700;font-family:var(--mono);
+  letter-spacing:.4px;flex-shrink:0;
+  animation:sigPulse 2.5s ease-in-out infinite;
+}
+.signal-buy{
+  background:var(--green-dim);color:var(--green);
+  border:1px solid var(--border-g);
+}
+.signal-hold{
+  background:rgba(234,179,8,.15);color:var(--yellow);
+  border:1px solid rgba(234,179,8,.3);
+}
+.signal-sell{
+  background:rgba(239,68,68,.15);color:var(--red);
+  border:1px solid rgba(239,68,68,.3);
+}
+
+/* Strategy label */
+.strategy-tag{
+  font-size:9px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;
+}
+/* Broker description */
+.broker-desc{font-size:11px;color:var(--text-dim);line-height:1.5}
+
+/* ══ STAT BOXES — matches dashboard kpi-sub / hstat style ══ */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.stat-box{
+  background:var(--bg-input);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:7px 8px;text-align:center;
+}
+.stat-value{
+  font-size:14px;font-weight:700;font-family:var(--mono);line-height:1;
+}
+.stat-label{
+  font-size:9px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;margin-top:3px;
+}
+
+/* Crypto tags — matches dashboard htag style */
+.crypto-tags{display:flex;gap:4px;flex-wrap:wrap}
+.crypto-tag{
+  padding:2px 7px;border-radius:3px;
+  font-size:9px;font-weight:700;font-family:var(--mono);
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--text-dim);
+}
+
+/* Mini chart */
+.chart-wrapper{position:relative;height:58px;margin:0 -2px}
+.chart-wrapper canvas{border-radius:4px}
+
+/* ══ CTA BUTTON — matches dashboard buy-btn pattern ══ */
+.cta-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:7px 10px;
+  background:var(--green-dim);
+  border:1px solid var(--border-g);
+  border-radius:var(--r);
+  color:var(--green);
+  font-size:12px;font-weight:600;font-family:var(--sans);
+  cursor:pointer;transition:all .15s;width:100%;
+  letter-spacing:.2px;
+}
+.cta-btn:hover{
+  background:rgba(34,197,94,.25);
+  border-color:rgba(34,197,94,.5);
+  box-shadow:0 0 14px rgba(34,197,94,.15);
+}
+.cta-btn svg{width:12px;height:12px}
+
+/* ══ PREMIUM TRANSITION ══ */
+#transition-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(4,6,10,0.85);
+  backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+#transition-overlay.active { opacity: 1; pointer-events: all; }
+
+.transition-clone {
+  position: fixed; z-index: 10000;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.transition-clone.focus {
+  top: 50% !important; left: 50% !important;
+  transform: translate(-50%, -50%) scale(1.08);
+  box-shadow: 0 0 50px rgba(34,197,94,0.25), 0 0 0 1px var(--green);
+}
+
+.transition-clone.expand {
+  top: 0 !important; left: 0 !important;
+  width: 100vw !important; height: 100vh !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  border-color: transparent !important;
+  background: var(--bg) !important;
+  box-shadow: none !important;
+}
+
+.transition-clone.expand > * {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* ══ DRAWER (Kept for fallback, though mostly unused now) ══ */
+.drawer-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+  z-index:300;opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;
+  width:min(480px,95vw);
+  background:#0d1117;
+  border-left:1px solid var(--border);
+  z-index:301;
+  transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.drawer.open{transform:translateX(0)}
+.drawer-header{
+  padding:16px 18px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;justify-content:space-between;
+  flex-shrink:0;
+  background:#0d1420;
+}
+.drawer-close{
+  width:28px;height:28px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--muted);font-size:14px;
+  transition:all .15s;
+}
+.drawer-close:hover{color:var(--text);background:rgba(255,255,255,.08)}
+.drawer-body{
+  padding:16px 18px;
+  overflow-y:auto;flex:1;
+  display:flex;flex-direction:column;gap:16px;
+}
+.drawer-chart-area{height:160px;position:relative}
+.drawer-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.drawer-stat{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--r);padding:11px;text-align:center;
+}
+.drawer-stat .val{font-size:18px;font-weight:700;font-family:var(--mono)}
+.drawer-stat .lbl{
+  font-size:9px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;margin-top:3px;
+}
+.trade-table{width:100%;border-collapse:collapse}
+.trade-table th{
+  font-size:9px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--muted);font-weight:600;text-align:left;
+  padding:7px 8px;border-bottom:1px solid var(--border);
+}
+.trade-table td{
+  font-size:11px;padding:8px 8px;
+  border-bottom:1px solid rgba(255,255,255,.04);
+  color:var(--text-dim);font-family:var(--mono);
+}
+.trade-table tr:hover td{background:rgba(255,255,255,.02)}
+.trade-win{color:var(--green) !important}
+.trade-loss{color:var(--red) !important}
+
+/* Follow button — matches dashboard buy-btn */
+.follow-btn{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px;width:100%;
+  background:var(--green);
+  border:none;border-radius:var(--r);
+  color:#000;font-weight:700;font-size:13px;
+  cursor:pointer;font-family:var(--sans);
+  transition:opacity .15s,transform .15s;
+  text-shadow:none;
+}
+.follow-btn:hover{opacity:.88;transform:translateY(-1px)}
+.section-sub{
+  font-size:10px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.7px;
+}
+
+/* ══ SKELETON LOADER ══ */
+.skel{
+  background:linear-gradient(90deg,var(--bg-card) 25%,var(--bg-input) 50%,var(--bg-card) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s infinite;
+  border-radius:4px;
+}
+
+/* ─── Search Bar ─── */
+.broker-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.broker-search svg {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+.broker-search input {
+  background: #06080b; /* darker than card */
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px 6px 30px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--sans);
+  width: 180px;
+  transition: all .2s;
+  outline: none;
+}
+.broker-search input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px rgba(34,197,94,.3);
+  width: 210px;
+}
+.broker-search input::placeholder { color: var(--muted); }
+
+/* ─── Card Follow Button ─── */
+.card-follow-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all .2s ease;
+  margin-left: auto;
+}
+.card-follow-btn:hover {
+  background: rgba(255,255,255,.05);
+  transform: scale(1.05);
+}
+.card-follow-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; transition: all .2s; }
+.card-follow-btn.active {
+  border-color: var(--green);
+  background: rgba(34,197,94,.1);
+  color: var(--green);
+  box-shadow: 0 0 8px rgba(34,197,94,.2);
+}
+.card-follow-btn.active svg { fill: var(--green); stroke: var(--green); }
+
+/* ─── Empty State ─── */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255,255,255,.01);
+  border: 1px dashed var(--border);
+  border-radius: var(--r);
+  color: var(--muted);
+}
+.empty-state svg { width: 32px; height: 32px; stroke: var(--muted); margin-bottom: 12px; }
+
+/* ── Responsive ── */
+@media(max-width:1200px){.broker-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){
+  .broker-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .filter-tabs{gap:3px; overflow-x:auto;}
+  .filter-row{flex-direction:column; align-items:flex-start;}
+  .broker-search input{width:100%;}
+  main{padding:14px 12px 48px}
+  nav,.subnav{padding:0 12px}
+}
+</style>
+
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="header">
+    <div class="header-left">
+        <a href="index.html" class="logo" style="text-decoration:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                <polyline points="16 7 22 7 22 13" />
+            </svg>
+            <span class="logo-text">SentiMarket</span>
+        </a>
+        <!-- Live Market Status -->
+        <div class="market-status-pill" data-tip="Real-time market data active">
+            <span class="status-dot"></span>
+            LIVE &bull; MARKET OPEN
+        </div>
+        <!-- Search Pill -->
+        <div class="search-pill" style="cursor:pointer">
+            <span class="search-label" style="display:flex;align-items:center;gap:4px">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                SEARCH ASSET:
+            </span>
+            <div class="search-box">
+                <span class="search-val">Dogecoin</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+            </div>
+            <span class="search-shortcut" style="margin-left:4px"><kbd>K</kbd></span>
+        </div>
+    </div>
+    <div class="header-right">
+        <!-- Alerts with badge -->
+        <button class="hbtn" data-tip="Price & sentiment alerts">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            Alerts
+            <span class="notif-badge">3</span>
+        </button>
+        <button class="hbtn hbtn-star" data-tip="Your tracked assets">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            Portfolio
+        </button>
+        <div class="hbtn-sep"></div>
+        <!-- User avatar -->
+        <div id="trader-dropdown-root" class="relative"></div>
+        <button class="hbtn hbtn-settings" title="Settings" data-tip="Preferences">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+        </button>
+        <button class="hbtn hbtn-bookmark" data-tip="Bookmark this asset">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+        </button>
+    </div>
+</header>
+
+<!-- ═══════════════════ SECONDARY NAV ═══════════════════ -->
+<nav class="subnav">
+    <a class="snav-link" href="index.html">DASHBOARD</a>
+    <a class="snav-link" href="analysis.html">ANALYSIS</a>
+    <a class="snav-link active" href="broker-insights-react.html">BROKER INSIGHTS</a>
+        <a class="snav-link" href="#" style="display:flex; align-items:center; gap:4px">ALERTS <span class="notif-badge" style="font-size:8px; margin-left:4px; padding: 2px 5px; border-radius:10px; background:var(--red); color:#fff;">3</span></a>
+    <a class="snav-link" href="#" style="display:flex; align-items:center; gap:4px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8h.01M11 12h1v4h1" />
+        </svg>
+        USER GUIDE
+    </a>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);padding:0 8px" class="kbd-help">
+        <kbd>K</kbd> Search &nbsp;&nbsp;
+        <kbd>B</kbd> Bookmark &nbsp;&nbsp;
+        <kbd>Esc</kbd> Close
+    </span>
+</nav>
+<main>
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Broker <span>Insights</span></h1>
+    <p>Top-performing brokers, AI systems &amp; trading firms. Click any card to view detailed graph analysis.</p>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Active Brokers</div>
+      <div class="kpi-value" data-count="8">0</div>
+      <div class="kpi-sub"><span class="up">↑</span> 2 added this week</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Success Rate</div>
+      <div class="kpi-value" data-count="74" data-suffix="%">0%</div>
+      <div class="kpi-sub"><span class="up">↑</span> 3.2% vs last month</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Categories</div>
+      <div class="kpi-value" data-count="5">0</div>
+      <div class="kpi-sub">Across all strategy types</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Confidence</div>
+      <div class="kpi-value" data-count="82" data-suffix="%">0%</div>
+      <div class="kpi-sub"><span class="up">↑</span> High conviction signals</div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-row">
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="setFilter('all',this)"><span class="tab-icon">⬡</span> All Brokers</button>
+      <button class="filter-tab" onclick="setFilter('institutional',this)"><span class="tab-icon">🏦</span> Institutional</button>
+      <button class="filter-tab" onclick="setFilter('ai',this)"><span class="tab-icon">🤖</span> AI Brokers</button>
+      <button class="filter-tab" onclick="setFilter('retail',this)"><span class="tab-icon">👤</span> Retail Analysts</button>
+      <button class="filter-tab" onclick="setFilter('quant',this)"><span class="tab-icon">📊</span> Quant Firms</button>
+      <button class="filter-tab" onclick="setFilter('social',this)"><span class="tab-icon">🔥</span> Social Sentiment</button>
+      <button class="filter-tab" id="followFilterBtn" onclick="setFilter('following',this)" style="border-left: 1px solid var(--border); padding-left: 14px; margin-left: 4px;">
+        <span class="tab-icon">⭐</span> Following (<span id="followCountBubble">0</span>)
+      </button>
+    </div>
+    
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="broker-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="brokerSearchInput" placeholder="Search brokers..." />
+      </div>
+      <div class="broker-count" id="broker-count">8 brokers</div>
+    </div>
+  </div>
+
+  <!-- SECTION -->
+  <div class="section-title">Top Performing Brokers</div>
+  <div class="broker-grid" id="broker-grid"></div>
+</main>
+
+<div id="transition-overlay"></div>
+
+<!-- DRAWER (Fallback) -->
+<div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div>
+      <div id="drawer-name" style="font-size:16px;font-weight:700;margin-bottom:3px;"></div>
+      <div id="drawer-cat" style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;"></div>
+    </div>
+    <div class="drawer-close" onclick="closeDrawer()">✕</div>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-stats" id="drawer-stats"></div>
+    <div>
+      <div class="section-sub" style="margin-bottom:10px;">Performance Chart</div>
+      <div class="drawer-chart-area"><canvas id="drawerChart"></canvas></div>
+    </div>
+    <div>
+      <div class="section-sub" style="margin-bottom:10px;">Recent Trades</div>
+      <table class="trade-table">
+        <thead><tr><th>Asset</th><th>Type</th><th>Entry</th><th>P&amp;L</th><th>Date</th></tr></thead>
+        <tbody id="trade-body"></tbody>
+      </table>
+    </div>
+    <button class="follow-btn" id="followBtn" onclick="toggleFollow(this)">⭐ Follow Broker</button>
+  </div>
+</div>
+
+<script>
+/* ── Data ── */
+const brokers = [
+  {
+    id:1, slug:'alphaquant', initials:'AQ', name:'AlphaQuant AI', category:'AI BROKER', type:'ai',
+    signal:'BUY', signalAsset:'BTC',
+    strategy:'MOMENTUM + SENTIMENT', strategyColor:'#22c55e',
+    desc:'Uses transformer-based NLP models to fuse on-chain momentum with social sentiment signals for high-conviction entries.',
+    success:'71%', wl:'142W / 58L', conf:'87%',
+    successColor:'#22c55e', confColor:'#06b6d4',
+    tags:['BTC','ETH','SOL'],
+    avatarBg:'linear-gradient(135deg,#0d2e1a,#1a4d2e)', avatarColor:'#22c55e',
+    chartColor:['#22c55e','rgba(34,197,94,0)'],
+    chartData:[42,38,55,48,62,58,70,64,78,72,85,80,90],
+    trades:[
+      {asset:'BTC',type:'LONG',entry:'$67,240',pnl:'+$4,820',date:'Mar 17',win:true},
+      {asset:'ETH',type:'LONG',entry:'$3,180',pnl:'+$640',date:'Mar 16',win:true},
+      {asset:'SOL',type:'SHORT',entry:'$148',pnl:'-$320',date:'Mar 15',win:false},
+      {asset:'BTC',type:'LONG',entry:'$65,900',pnl:'+$2,100',date:'Mar 14',win:true},
+    ]
+  },
+  {
+    id:2, slug:'nexusflow', initials:'NF', name:'NexusFlow Capital', category:'INSTITUTIONAL', type:'institutional',
+    signal:'HOLD', signalAsset:'ETH',
+    strategy:'MACRO + ON-CHAIN FLOW', strategyColor:'#06b6d4',
+    desc:'Tracks institutional wallet flows and macro indicators including DXY correlation to time large-cap crypto moves.',
+    success:'68%', wl:'204W / 96L', conf:'74%',
+    successColor:'#22c55e', confColor:'#06b6d4',
+    tags:['BTC','ETH','AVAX'],
+    avatarBg:'linear-gradient(135deg,#0a1e2e,#102a3e)', avatarColor:'#06b6d4',
+    chartColor:['#06b6d4','rgba(6,182,212,0)'],
+    chartData:[50,55,48,60,55,65,58,70,63,75,68,72,78],
+    trades:[
+      {asset:'ETH',type:'LONG',entry:'$3,050',pnl:'+$1,240',date:'Mar 17',win:true},
+      {asset:'AVAX',type:'LONG',entry:'$38.2',pnl:'+$280',date:'Mar 16',win:true},
+      {asset:'BTC',type:'LONG',entry:'$66,100',pnl:'+$1,800',date:'Mar 15',win:true},
+      {asset:'ETH',type:'SHORT',entry:'$3,200',pnl:'-$450',date:'Mar 13',win:false},
+    ]
+  },
+  {
+    id:3, slug:'quantedge', initials:'QE', name:'QuantEdge Systems', category:'QUANT TRADING', type:'quant',
+    signal:'BUY', signalAsset:'SOL',
+    strategy:'STATISTICAL ARBITRAGE', strategyColor:'#a855f7',
+    desc:'High-frequency statistical arbitrage across CEX/DEX pairs. Mean-reversion and co-integration models with 200ms execution.',
+    success:'79%', wl:'316W / 84L', conf:'91%',
+    successColor:'#22c55e', confColor:'#06b6d4',
+    tags:['BTC','SOL','DOGE'],
+    avatarBg:'linear-gradient(135deg,#1a0a2e,#2a1045)', avatarColor:'#a855f7',
+    chartColor:['#a855f7','rgba(168,85,247,0)'],
+    chartData:[45,52,49,60,55,68,62,74,68,82,76,88,92],
+    trades:[
+      {asset:'SOL',type:'LONG',entry:'$152',pnl:'+$1,840',date:'Mar 17',win:true},
+      {asset:'DOGE',type:'LONG',entry:'$0.182',pnl:'+$520',date:'Mar 17',win:true},
+      {asset:'BTC',type:'LONG',entry:'$67,500',pnl:'+$3,200',date:'Mar 16',win:true},
+      {asset:'SOL',type:'SHORT',entry:'$158',pnl:'-$280',date:'Mar 15',win:false},
+    ]
+  },
+  {
+    id:4, slug:'cryptosage', initials:'CS', name:'CryptoSage Retail', category:'RETAIL ANALYST', type:'retail',
+    signal:'BUY', signalAsset:'DOGE',
+    strategy:'TECHNICAL ANALYSIS', strategyColor:'#f97316',
+    desc:'Classic TA approach using RSI, MACD, Bollinger Bands and Elliott Wave patterns on meme coin price action.',
+    success:'62%', wl:'186W / 114L', conf:'65%',
+    successColor:'#22c55e', confColor:'#06b6d4',
+    tags:['DOGE','PEPE','SHIB'],
+    avatarBg:'linear-gradient(135deg,#2a0e00,#3d1800)', avatarColor:'#f97316',
+    chartColor:['#f97316','rgba(249,115,22,0)'],
+    chartData:[60,55,65,58,70,62,68,74,70,78,72,76,80],
+    trades:[
+      {asset:'DOGE',type:'LONG',entry:'$0.182',pnl:'+$380',date:'Mar 17',win:true},
+      {asset:'PEPE',type:'LONG',entry:'$0.0000142',pnl:'+$220',date:'Mar 16',win:true},
+      {asset:'SHIB',type:'SHORT',entry:'$0.0000248',pnl:'-$140',date:'Mar 15',win:false},
+      {asset:'DOGE',type:'LONG',entry:'$0.172',pnl:'+$490',date:'Mar 14',win:true},
+    ]
+  },
+  {
+    id:5, slug:'viralvault', initials:'VV', name:'ViralVault Sentiment', category:'SOCIAL SENTIMENT', type:'social',
+    signal:'BUY', signalAsset:'PEPE',
+    strategy:'SOCIAL SIGNAL MINING', strategyColor:'#ec4899',
+    desc:'Real-time scraping of Twitter, Reddit, and Telegram to detect early narrative shifts and viral token momentum.',
+    success:'58%', wl:'224W / 162L', conf:'61%',
+    successColor:'#22c55e', confColor:'#06b6d4',
+    tags:['PEPE','WIF','BONK'],
+    avatarBg:'linear-gradient(135deg,#2a001e,#400030)', avatarColor:'#ec4899',
+    chartColor:['#ec4899','rgba(236,72,153,0)'],
+    chartData:[30,45,38,55,42,60,52,65,58,70,62,75,68],
+    trades:[
+      {asset:'PEPE',type:'LONG',entry:'$0.0000138',pnl:'+$640',date:'Mar 17',win:true},
+      {asset:'WIF',type:'LONG',entry:'$2.84',pnl:'-$180',date:'Mar 16',win:false},
+      {asset:'BONK',type:'LONG',entry:'$0.0000284',pnl:'+$320',date:'Mar 15',win:true},
+      {asset:'PEPE',type:'SHORT',entry:'$0.0000155',pnl:'+$210',date:'Mar 14',win:true},
+    ]
+  },
+  {
+    id:6, slug:'deltaforce', initials:'DF', name:'DeltaForce Macro', category:'INSTITUTIONAL', type:'institutional',
+    signal:'SELL', signalAsset:'XRP',
+    strategy:'MACRO + DERIVATIVES', strategyColor:'#ef4444',
+    desc:'Options flow analysis combined with Fed policy signals and cross-asset macro correlations for strategic positioning.',
+    success:'71%', wl:'178W / 72L', conf:'79%',
+    successColor:'#22c55e', confColor:'#06b6d4',
+    tags:['XRP','BTC','ETH'],
+    avatarBg:'linear-gradient(135deg,#1a0000,#2e0000)', avatarColor:'#ef4444',
+    chartColor:['#ef4444','rgba(239,68,68,0)'],
+    chartData:[80,75,70,72,68,64,66,62,58,60,55,52,48],
+    trades:[
+      {asset:'XRP',type:'SHORT',entry:'$0.624',pnl:'+$1,120',date:'Mar 17',win:true},
+      {asset:'BTC',type:'SHORT',entry:'$68,200',pnl:'-$800',date:'Mar 16',win:false},
+      {asset:'ETH',type:'SHORT',entry:'$3,380',pnl:'+$540',date:'Mar 15',win:true},
+      {asset:'XRP',type:'SHORT',entry:'$0.658',pnl:'+$920',date:'Mar 14',win:true},
+    ]
+  },
+  {
+    id:7, slug:'neuralnet', initials:'NN', name:'NeuralNet Alpha', category:'AI BROKER', type:'ai',
+    signal:'BUY', signalAsset:'ETH',
+    strategy:'DEEP LEARNING SIGNALS', strategyColor:'#06b6d4',
+    desc:'LSTM networks trained on 5 years of OHLCV data, order book depth, and funding rate patterns across major exchanges.',
+    success:'76%', wl:'290W / 92L', conf:'84%',
+    successColor:'#22c55e', confColor:'#06b6d4',
+    tags:['ETH','BTC','LINK'],
+    avatarBg:'linear-gradient(135deg,#002020,#003535)', avatarColor:'#06b6d4',
+    chartColor:['#06b6d4','rgba(6,182,212,0)'],
+    chartData:[40,48,44,56,52,64,60,70,66,76,72,82,86],
+    trades:[
+      {asset:'ETH',type:'LONG',entry:'$3,120',pnl:'+$2,480',date:'Mar 17',win:true},
+      {asset:'LINK',type:'LONG',entry:'$18.4',pnl:'+$380',date:'Mar 16',win:true},
+      {asset:'BTC',type:'LONG',entry:'$66,800',pnl:'+$4,200',date:'Mar 15',win:true},
+      {asset:'ETH',type:'SHORT',entry:'$3,250',pnl:'-$680',date:'Mar 13',win:false},
+    ]
+  },
+  {
+    id:8, slug:'meridian', initials:'MQ', name:'Meridian Quant Fund', category:'QUANT TRADING', type:'quant',
+    signal:'HOLD', signalAsset:'BTC',
+    strategy:'MEAN REVERSION + HFT', strategyColor:'#eab308',
+    desc:'Multi-strategy quantitative fund deploying mean-reversion, pairs trading, and latency-arbitrage across 14 venues.',
+    success:'83%', wl:'412W / 84L', conf:'88%',
+    successColor:'#22c55e', confColor:'#06b6d4',
+    tags:['BTC','ETH','SOL'],
+    avatarBg:'linear-gradient(135deg,#1e1600,#2e2000)', avatarColor:'#eab308',
+    chartColor:['#eab308','rgba(234,179,8,0)'],
+    chartData:[55,62,58,68,64,74,70,78,74,82,78,86,90],
+    trades:[
+      {asset:'BTC',type:'LONG',entry:'$67,100',pnl:'+$6,400',date:'Mar 17',win:true},
+      {asset:'ETH',type:'LONG',entry:'$3,160',pnl:'+$1,240',date:'Mar 16',win:true},
+      {asset:'SOL',type:'LONG',entry:'$149',pnl:'+$820',date:'Mar 15',win:true},
+      {asset:'BTC',type:'SHORT',entry:'$68,400',pnl:'-$1,100',date:'Mar 13',win:false},
+    ]
+  }
+];
+window.brokers = brokers;
+
+let drawerChart = null;
+const chartInstances = {};
+
+/* ── State & Storage ── */
+let currentFilterType = 'all';
+let currentSearchQuery = '';
+let followedBrokers = [];
+
+try {
+  const stored = localStorage.getItem('sentimarket_following');
+  if (stored) { followedBrokers = JSON.parse(stored); }
+} catch(e) {}
+
+function updateFollowBadge() {
+  document.getElementById('followCountBubble').textContent = followedBrokers.length;
+}
+
+/* ── Live data simulation ── */
+function liveFlicker() {
+  return;
+}
+
+/* ── Search & Filter Logic ── */
+document.getElementById('brokerSearchInput').addEventListener('input', (e) => {
+  currentSearchQuery = e.target.value.toLowerCase();
+  applyFilters();
+});
+
+function setFilter(type, btn) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilterType = type;
+  applyFilters();
+}
+
+function toggleCardFollow(id, event) {
+  event.stopPropagation(); // prevent drawer open
+  const idx = followedBrokers.indexOf(id);
+  if (idx > -1) {
+    followedBrokers.splice(idx, 1);
+  } else {
+    followedBrokers.push(id);
+  }
+  localStorage.setItem('sentimarket_following', JSON.stringify(followedBrokers));
+  updateFollowBadge();
+  
+  // Re-apply filters if we are currently looking at the "following" tab, to remove it immediately.
+  // Otherwise, just visually toggle the state to remain fast.
+  if (currentFilterType === 'following') {
+    applyFilters();
+  } else {
+    const btn = event.currentTarget;
+    btn.classList.toggle('active');
+  }
+}
+
+function applyFilters() {
+  let list = brokers;
+  
+  // Apply Type Filter
+  if (currentFilterType === 'following') {
+    list = list.filter(b => followedBrokers.includes(b.id));
+  } else if (currentFilterType !== 'all') {
+    list = list.filter(b => b.type === currentFilterType);
+  }
+
+  // Apply Search
+  if (currentSearchQuery) {
+    list = list.filter(b => {
+      return b.name.toLowerCase().includes(currentSearchQuery) ||
+             b.strategy.toLowerCase().includes(currentSearchQuery) ||
+             b.tags.some(t => t.toLowerCase().includes(currentSearchQuery));
+    });
+  }
+
+  // Sort: Following First (Optional advanced behavior requested)
+  list.sort((a,b) => {
+    const aFol = followedBrokers.includes(a.id) ? 1 : 0;
+    const bFol = followedBrokers.includes(b.id) ? 1 : 0;
+    return bFol - aFol; 
+  });
+
+  renderBrokers(list);
+}
+
+/* ── Render ── */
+function renderBrokers(list) {
+  const grid = document.getElementById('broker-grid');
+  grid.innerHTML = '';
+  document.getElementById('broker-count').textContent = list.length + ' brokers';
+  
+  if (list.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M10 21V14C10 12.8954 10.8954 12 12 12C13.1046 12 14 12.8954 14 14V21M21 10C21 14.9706 16.9706 19 12 19C7.02944 19 3 14.9706 3 10C3 5.02944 7.02944 1 12 1C16.9706 1 21 5.02944 21 10Z"/><path d="M12 2v2"/><path d="M12 15v2"/></svg>
+        <div style="font-weight:600; font-size:14px; color:var(--text); margin-bottom:4px;">No brokers found</div>
+        <div style="font-size:12px;">Try adjusting your search or filters to find what you're looking for.</div>
+      </div>
+    `;
+    return;
+  }
+
+  list.forEach((b, i) => {
+    const sigClass = b.signal === 'BUY' ? 'signal-buy' : b.signal === 'SELL' ? 'signal-sell' : 'signal-hold';
+    const isFollowed = followedBrokers.includes(b.id);
+    const card = document.createElement('div');
+    card.className = 'broker-card';
+    card.style.animationDelay = Math.min((i * 0.05), 0.5) + 's'; // cap delay so it doesn't take forever to load if many items
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="broker-identity">
+          <div class="broker-avatar" style="background:${b.avatarBg};color:${b.avatarColor}">${b.initials}</div>
+          <div>
+            <div class="broker-name">${b.name}</div>
+            <div class="broker-category">${b.category}</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+          <button class="card-follow-btn ${isFollowed ? 'active' : ''}" onclick="toggleCardFollow(${b.id}, event)" title="Follow Broker">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
+          <div class="signal-badge ${sigClass}">${b.signal} ${b.signalAsset}</div>
+        </div>
+      </div>
+      <div class="strategy-tag" style="color:${b.strategyColor}">${b.strategy}</div>
+      <div class="broker-desc">${b.desc}</div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-value" style="color:${b.successColor}">${b.success}</div>
+          <div class="stat-label">Success</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" style="color:var(--text)">${b.wl}</div>
+          <div class="stat-label">Win / Loss</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" style="color:${b.confColor}">${b.conf}</div>
+          <div class="stat-label">Confidence</div>
+        </div>
+      </div>
+      <div class="crypto-tags">${b.tags.map(t=>`<span class="crypto-tag">${t}</span>`).join('')}</div>
+      <div class="chart-wrapper" style="margin-bottom:16px"><canvas id="chart-${b.id}"></canvas></div>
+      <div id="btn-root-${b.id}" style="margin-top:auto; width:100%"></div>
+    `;
+    grid.appendChild(card);
+    // Draw chart asynchronously to prevent blocking the thread
+    setTimeout(() => initMiniChart(b), 10);
+    
+    // Wait for Babel to initialize React scope, then mount
+    setTimeout(() => {
+        if(window.mountAnalysisButton) {
+            window.mountAnalysisButton(`btn-root-${b.id}`, b.id);
+        } else {
+            // Backup polling if babel is slow
+            let attempts = 0;
+            let i = setInterval(() => {
+                if(window.mountAnalysisButton) { 
+                    window.mountAnalysisButton(`btn-root-${b.id}`, b.id); 
+                    clearInterval(i); 
+                }
+                if(attempts++ > 10) clearInterval(i);
+            }, 100);
+        }
+    }, 200);
+  });
+}
+
+function initMiniChart(b) {
+  const canvas = document.getElementById('chart-' + b.id);
+  if (!canvas) return;
+  if (chartInstances[b.id]) { chartInstances[b.id].destroy(); }
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 58);
+  grad.addColorStop(0, b.chartColor[0] + 'aa');
+  grad.addColorStop(1, b.chartColor[1]);
+  chartInstances[b.id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: b.chartData.map((_,i) => i),
+      datasets: [{
+        data: b.chartData,
+        borderColor: b.chartColor[0],
+        borderWidth: 1.8,
+        fill: true,
+        backgroundColor: grad,
+        tension: 0.42,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } },
+      animation: { duration: 900, easing: 'easeOutQuart' }
+    }
+  });
+}
+
+/* ── PREMIUM EXPAND ANIMATION ── */
+function expandCard(id, event) {
+  const btn = event.currentTarget;
+  const card = btn.closest('.broker-card');
+  const rect = card.getBoundingClientRect();
+  const overlay = document.getElementById('transition-overlay');
+  
+  // Create Clone
+  const clone = document.createElement('div');
+  clone.className = 'transition-clone';
+  clone.innerHTML = card.innerHTML;
+  
+  // Set initial bounds
+  clone.style.top = rect.top + 'px';
+  clone.style.left = rect.left + 'px';
+  clone.style.width = rect.width + 'px';
+  clone.style.height = rect.height + 'px';
+  clone.style.margin = '0'; // override any card margins
+  
+  // To keep the chart looking exact, we'd need to copy the canvas image data, 
+  // but for a fast zoom, keeping the wrapper is enough since we fade it out anyway.
+  
+  overlay.innerHTML = '';
+  overlay.appendChild(clone);
+  
+  // Show overlay
+  overlay.classList.add('active');
+  
+  // Trigger Focus State
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // Move to center, scale up
+      clone.classList.add('focus');
+      
+      // After focus pause, Morph to Full Screen
+      setTimeout(() => {
+        clone.classList.remove('focus');
+        clone.classList.add('expand');
+        
+        // When expand transition ends, navigate to analysis page seamlessly
+        setTimeout(() => {
+          document.body.style.opacity = '0'; // hide everything instantly to prevent flashed content
+          window.location.href = `broker-analysis.html?transition=1&id=${id}`;
+        }, 500); // Wait 500ms for expand to finish
+        
+      }, 600); // Wait 600ms for focus state to be appreciated
+    });
+  });
+}
+
+function openDrawer(id) {
+  const b = brokers.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('drawer-name').textContent = b.name;
+  document.getElementById('drawer-cat').textContent = b.category + ' · ' + b.strategy;
+  document.getElementById('followBtn').textContent = '⭐ Follow Broker';
+  document.getElementById('drawer-stats').innerHTML = `
+    <div class="drawer-stat">
+      <div class="val" style="color:var(--green)">${b.success}</div>
+      <div class="lbl">Success Rate</div>
+    </div>
+    <div class="drawer-stat">
+      <div class="val" style="color:var(--text)">${b.wl}</div>
+      <div class="lbl">Win / Loss</div>
+    </div>
+    <div class="drawer-stat">
+      <div class="val" style="color:#06b6d4">${b.conf}</div>
+      <div class="lbl">Confidence</div>
+    </div>
+  `;
+  document.getElementById('trade-body').innerHTML = b.trades.map(t => `
+    <tr>
+      <td style="color:var(--text);font-weight:600">${t.asset}</td>
+      <td>${t.type}</td>
+      <td>${t.entry}</td>
+      <td class="${t.win ? 'trade-win' : 'trade-loss'}">${t.pnl}</td>
+      <td style="color:var(--muted)">${t.date}</td>
+    </tr>
+  `).join('');
+
+  if (drawerChart) { drawerChart.destroy(); drawerChart = null; }
+  setTimeout(() => {
+    const ctx = document.getElementById('drawerChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 160);
+    grad.addColorStop(0, b.chartColor[0] + '55');
+    grad.addColorStop(1, b.chartColor[1]);
+    drawerChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: b.chartData.map((_,i) => 'D' + i),
+        datasets: [{
+          data: b.chartData,
+          borderColor: b.chartColor[0],
+          borderWidth: 2,
+          fill: true,
+          backgroundColor: grad,
+          tension: 0.42,
+          pointBackgroundColor: b.chartColor[0],
+          pointRadius: 2.5,
+          pointHoverRadius: 5
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(22,27,39,.95)',
+            borderColor: b.chartColor[0] + '44',
+            borderWidth: 1,
+            titleColor: '#6b7280',
+            bodyColor: b.chartColor[0],
+            padding: 8, cornerRadius: 6
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#6b7280', font: { size: 9 } } },
+          y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#6b7280', font: { size: 9 } } }
+        },
+        animation: { duration: 700, easing: 'easeOutQuart' }
+      }
+    });
+  }, 50);
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+function toggleFollow(btn) {
+  const following = btn.textContent.includes('Following');
+  btn.textContent = following ? '⭐ Follow Broker' : '✓ Following Broker';
+  btn.style.background = following ? 'var(--green)' : 'rgba(34,197,94,.18)';
+  btn.style.color = following ? '#000' : 'var(--green)';
+  btn.style.border = following ? 'none' : '1px solid var(--border-g)';
+}
+
+/* ── Count-up animation ── */
+function countUp(el) {
+  const target = parseInt(el.dataset.count);
+  const suffix = el.dataset.suffix || '';
+  let current = 0;
+  const step = target / 40;
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = Math.floor(current) + suffix;
+    if (current >= target) {
+      clearInterval(timer);
+      el.dataset.base = target;
+      el.dataset.live = '1';
+    }
+  }, 28);
+}
+
+/* ── Page-exit transition — matches dashboard ── */
+document.addEventListener('click', function(e) {
+  const a = e.target.closest('a[href]');
+  if (!a) return;
+  const href = a.getAttribute('href');
+  if (!href || href === '#' || href.startsWith('javascript')) return;
+  if (a.target === '_blank') return;
+  e.preventDefault();
+  document.body.style.transition = 'opacity .22s ease, transform .22s ease';
+  document.body.style.opacity = '0';
+  document.body.style.transform = 'translateY(-6px)';
+  setTimeout(() => { window.location.href = href; }, 230);
+});
+
+/* ── Init ── */
+updateFollowBadge();
+applyFilters();
+setTimeout(() => document.querySelectorAll('[data-count]').forEach(countUp), 150);
+</script>
+
+<div id="react-analysis-root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+const { motion, AnimatePresence } = window.Motion;
+
+/* --- COMPONENT 0: AnalysisButton --- */
+function AnalysisButton({ label, onClick, variant = 'default' }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+
+  return (
+    <motion.button
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      onTapStart={() => setIsActive(true)}
+      onTapEnd={() => setIsActive(false)}
+      onClick={onClick}
+      initial={false}
+      animate={{
+        scale: isActive ? 0.97 : isHovered ? 1.02 : 1,
+        y: isHovered && !isActive ? -2 : 0,
+        backgroundColor: isActive ? 'rgba(34,197,94,0.12)' : isHovered ? 'rgba(34,197,94,0.08)' : 'transparent',
+        borderColor: isHovered ? 'rgba(34,197,94,0.6)' : 'rgba(34,197,94,0.3)',
+        boxShadow: isHovered ? '0 0 12px rgba(34,197,94,0.3)' : '0 0 0px rgba(34,197,94,0)',
+      }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      style={{
+        width: '100%',
+        height: '42px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        padding: '8px 16px',
+        borderRadius: '10px',
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        color: isHovered ? '#4ade80' : '#22c55e',
+        fontSize: '13px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+      className="group"
+    >
+      <motion.div 
+        initial={false}
+        animate={{ opacity: isActive ? 1 : 0 }}
+        style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at center, rgba(34,197,94,0.3) 0%, transparent 70%)', filter: 'blur(8px)' }}
+      />
+      <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <motion.svg 
+          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+          animate={{ x: isHovered ? 2 : 0 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+        </motion.svg>
+        {label}
+      </span>
+    </motion.button>
+  );
+}
+
+// Global hook to mount from Vanilla JS
+window.mountAnalysisButton = (elId, brokerId) => {
+  const rootEl = document.getElementById(elId);
+  if (rootEl) {
+    const root = ReactDOM.createRoot(rootEl);
+    root.render(<AnalysisButton label="View Graph Analysis" onClick={() => window.openReactPanel(brokerId)} />);
+  }
+};
+
+/* --- COMPONENT 1: FollowButton --- */
+function FollowButton({ isFollowing, onToggle }) {
+  return (
+    <motion.button onClick={onToggle} whileTap={{ scale: 0.9 }} whileHover={{ scale: 1.05 }} initial={false}
+      animate={{
+        backgroundColor: isFollowing ? 'rgba(34, 197, 94, 0.15)' : 'transparent',
+        borderColor: isFollowing ? 'rgba(34, 197, 94, 0.5)' : 'rgba(255, 255, 255, 0.2)',
+        color: isFollowing ? '#22c55e' : '#94a3b8',
+      }}
+      className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-300"
+      style={{ boxShadow: isFollowing ? '0 0 15px rgba(34, 197, 94, 0.2)' : 'none' }}>
+      <motion.svg width="16" height="16" viewBox="0 0 24 24" fill={isFollowing ? '#22c55e' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" animate={{ scale: isFollowing ? [1, 1.2, 1] : 1 }} transition={{ duration: 0.3 }}>
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </motion.svg>
+      <span className="text-sm font-semibold tracking-wide">{isFollowing ? 'Following' : 'Follow'}</span>
+    </motion.button>
+  );
+}
+
+/* --- COMPONENT 2: TrustScoreBadge --- */
+function TrustScoreBadge({ score }) {
+  const [animatedScore, setAnimatedScore] = useState(0);
+  const getColor = (s) => s >= 80 ? '#22c55e' : s >= 50 ? '#eab308' : '#ef4444';
+  const color = getColor(score);
+  const label = score >= 80 ? 'High Trust' : score >= 50 ? 'Medium' : 'Low Trust';
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (animatedScore / 100) * circumference;
+
+  useEffect(() => {
+    let start = 0;
+    const increment = score / (1200 / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= score) { setAnimatedScore(score); clearInterval(timer); } 
+      else { setAnimatedScore(start); }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [score]);
+
+  return (
+    <div className="flex flex-col items-center justify-center p-4 bg-[#111620] border border-[#1c2433] rounded-xl relative overflow-hidden">
+      <div className="absolute inset-0 opacity-10 blur-xl pointer-events-none" style={{ backgroundColor: color }} />
+      <div className="text-[10px] uppercase text-slate-500 font-semibold tracking-widest mb-3">Trust Score</div>
+      <div className="relative flex items-center justify-center w-24 h-24 mb-3">
+        <svg className="w-full h-full transform -rotate-90">
+          <circle cx="48" cy="48" r={radius} stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="transparent" />
+          <motion.circle cx="48" cy="48" r={radius} stroke={color} strokeWidth="6" fill="transparent" strokeLinecap="round" initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset }} style={{ strokeDasharray: circumference, filter: `drop-shadow(0 0 6px ${color}88)` }} transition={{ duration: 1.2, ease: "easeOut" }} />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center flex-col">
+          <span className="text-2xl font-bold font-mono" style={{ color }}>{Math.round(animatedScore)}</span>
+        </div>
+      </div>
+      <div className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: `${color}15`, color, border: `1px solid ${color}30` }}>{label}</div>
+    </div>
+  );
+}
+
+/* --- COMPONENT 3: TradeTimeline --- */
+const itemVariants = { hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } };
+function TradeTimeline({ trades = [] }) {
+  return (
+    <div className="bg-[#111620] border border-[#1c2433] rounded-xl p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-white font-semibold flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-400"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>Recent Trades</h3>
+        <span className="text-xs text-slate-500 font-medium bg-[#1c2433] px-2 py-1 rounded">Live Timeline</span>
+      </div>
+      <div className="relative">
+        <div className="absolute left-[11px] top-2 bottom-2 w-px bg-[#1c2433] z-0" />
+        <motion.div className="space-y-4 relative z-10" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+          {trades.map((trade, idx) => {
+            const isBuy = trade.type === 'BUY';
+            const isSell = trade.type === 'SELL';
+            const badgeColor = isBuy ? 'text-green-400 bg-green-500/10 border-green-500/30' : isSell ? 'text-red-400 bg-red-500/10 border-red-500/30' : 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+            const dotColor = isBuy ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : isSell ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-slate-500 shadow-[0_0_8px_#64748b]';
+            const isProfit = parseFloat(trade.pnl) >= 0;
+            const pnlColor = isProfit ? 'text-green-400' : 'text-red-400';
+            return (
+              <motion.div key={idx} variants={itemVariants} className="flex items-start gap-4 group cursor-default">
+                <div className="relative mt-1.5 flex h-6 w-6 items-center justify-center bg-[#111620]"><div className={`h-2.5 w-2.5 rounded-full ${dotColor} group-hover:scale-150 transition-transform duration-300`} /></div>
+                <div className="flex-1 bg-[#0d1420] border border-[#1c2433] p-3 rounded-lg group-hover:border-[#21293a] group-hover:bg-[#0f1725] transition-colors relative overflow-hidden">
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-2"><span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${badgeColor}`}>{trade.type}</span><span className="text-white font-semibold text-sm">{trade.asset}</span></div>
+                    <span className="text-xs text-slate-500">{trade.date}</span>
+                  </div>
+                  <div className="flex justify-between items-end mt-2"><div className="text-xs text-slate-400">Entry: <span className="text-white font-mono">${trade.entry}</span></div><div className={`text-sm font-bold font-mono ${pnlColor}`}>{isProfit ? '+' : ''}{trade.pnl}%</div></div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+/* --- COMPONENT 4: BrokerHistory --- */
+function MetricCard({ label, value, color }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="bg-[#111620] border border-[#1c2433] rounded-xl p-4 flex flex-col justify-center items-center text-center">
+      <div className="text-[10px] uppercase text-slate-500 tracking-widest mb-1">{label}</div>
+      <div className={`text-2xl font-bold font-mono ${color}`}>{value}</div>
+    </motion.div>
+  );
+}
+function BrokerHistory({ winRate, totalTrades, pnlRatio }) {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-xl font-semibold text-white mb-4">Broker Performance History</h3>
+      <div className="grid grid-cols-3 gap-3 mb-2">
+        <MetricCard label="7D Accuracy" value={`${winRate}%`} color="text-green-400" />
+        <MetricCard label="Trend" value="⬆ BULL" color="text-green-400" />
+        <MetricCard label="Profit %" value="+24%" color="text-green-400" />
+      </div>
+      <div className="bg-[#111620] border border-[#1c2433] rounded-lg p-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-green-500/5 blur-[100px] pointer-events-none" />
+        <div className="flex justify-between items-center mb-4">
+          <h4 className="text-sm font-semibold text-white">Performance Trend</h4>
+          <span className="text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-400 px-2 py-1 rounded border border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.15)]">Outperforming Benchmark</span>
+        </div>
+        <div className="h-[250px] w-full border border-white/5 rounded-lg flex items-center justify-center bg-[#0d1420] relative">
+          <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+            <motion.path d="M0,200 Q100,250 200,150 T400,100 T600,120 T800,50" fill="none" stroke="#22c55e" strokeWidth="3" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }} transition={{ duration: 2, ease: "easeInOut", delay: 0.5 }} style={{ filter: 'drop-shadow(0 0 8px rgba(34,197,94,0.6))' }} />
+            <motion.path d="M0,200 Q100,250 200,150 T400,100 T600,120 T800,50 L800,250 L0,250 Z" fill="url(#greenGrad)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.5, delay: 1 }} />
+            <defs><linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="rgba(34,197,94,0.3)" /><stop offset="100%" stopColor="rgba(34,197,94,0)" /></linearGradient></defs>
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* --- COMPONENT 5: AnalysisPanel --- */
+function PanelMetric({ label, value, color }) {
+  return (
+    <div className="bg-[#111620] border border-[#1c2433] rounded-lg p-3 flex flex-col justify-center">
+      <div className="text-[9px] uppercase text-slate-500 tracking-wider mb-1">{label}</div>
+      <div className={`text-lg font-bold font-mono ${color}`}>{value}</div>
+    </div>
+  );
+}
+
+function TransitionButton({ broker }) {
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const handleClick = () => {
+    setIsLoading(true);
+    // Write context to session storage
+    sessionStorage.setItem('brokerTransitionData', JSON.stringify(broker));
+    
+    // Trigger global exit transition on the entire body
+    document.body.classList.add('page-transitioning');
+    
+    setTimeout(() => {
+      window.location.href = 'broker-analysis.html?id=' + (broker.slug || broker.id || 'alphaquant');
+    }, 450);
+  };
+
+  return (
+    <motion.button
+      whileHover={!isLoading ? { scale: 1.02 } : {}}
+      whileTap={!isLoading ? { scale: 0.96 } : {}}
+      onClick={handleClick}
+      disabled={isLoading}
+      className={`w-full relative overflow-hidden flex items-center justify-center gap-2 py-3 bg-[#111620] border hover:bg-green-500/10 text-slate-300 rounded-lg text-[13px] font-bold tracking-wide uppercase transition-all shadow-[0_4px_20px_rgba(0,0,0,0.5)] group ${isLoading ? 'border-green-500/50 text-green-400' : 'border-[#1c2433] hover:border-green-500/50 hover:text-green-400'}`}
+      style={isLoading ? { animation: 'pulseGlow 1.5s infinite' } : {}}
+    >
+      {isLoading ? (
+        <span className="flex items-center gap-3 text-green-400 z-10 relative">
+          <svg className="animate-spin h-4 w-4 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          Loading Analysis...
+        </span>
+      ) : (
+        <React.Fragment>
+          <span className="relative z-10">Open Full Analysis</span>
+          <svg className="relative z-10 group-hover:translate-x-1 transition-transform" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <div className="absolute inset-0 bg-green-500/0 group-hover:bg-green-500/5 transition-colors" />
+        </React.Fragment>
+      )}
+    </motion.button>
+  );
+}
+
+function AnalysisPanel({ broker, isOpen, onClose }) {
+  const PANEL_TRANSITION = { type: 'spring', damping: 25, stiffness: 200, mass: 0.8 };
+  return (
+    <AnimatePresence>
+      {isOpen && broker && (
+        <React.Fragment>
+          <motion.div initial={{ opacity: 0, backdropFilter: 'blur(0px)' }} animate={{ opacity: 1, backdropFilter: 'blur(6px)' }} exit={{ opacity: 0, backdropFilter: 'blur(0px)' }} transition={{ duration: 0.4 }} className="fixed inset-0 z-[1000] bg-black/50" onClick={onClose} />
+          <motion.div initial={{ x: '100%', boxShadow: '-20px 0 50px rgba(0,0,0,0)' }} animate={{ x: 0, boxShadow: '-20px 0 50px rgba(0,0,0,0.5)' }} exit={{ x: '100%', boxShadow: '-20px 0 50px rgba(0,0,0,0)' }} transition={PANEL_TRANSITION} className="fixed top-0 right-0 bottom-0 z-[1001] w-full md:w-[40%] min-w-[360px] max-w-[500px] bg-[#080f1c] border-l border-[#1c2433] shadow-[0_0_40px_rgba(34,197,94,0.05)] overflow-y-auto flex flex-col font-sans">
+            <div className="sticky top-0 z-20 bg-[#080f1c]/90 backdrop-blur-md border-b border-[#1c2433] px-6 py-4 flex flex-col gap-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded flex items-center justify-center text-lg shadow-inner bg-opacity-20 border" style={{ backgroundColor: `${broker.avatarColor}`, color: '#fff', borderColor: `${broker.avatarColor}` }}>{broker.initials}</div>
+                  <div><h2 className="text-lg font-bold text-white leading-tight">{broker.name}</h2><div className="text-xs text-slate-400 font-medium tracking-wide uppercase">{broker.strategy}</div></div>
+                </div>
+                <div className="flex gap-2">
+                  <FollowButton isFollowing={false} onToggle={() => {}} />
+                  <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                </div>
+              </div>
+            </div>
+            <motion.div className="p-6 flex-1 flex flex-col gap-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}>
+              <div className="flex justify-between items-stretch gap-4">
+                <div className="grid grid-cols-2 gap-3 flex-1">
+                  <PanelMetric label="Success Rate" value={`${broker.success}`} color="text-green-400" />
+                  <PanelMetric label="Win / Loss" value={broker.wl} color="text-white" />
+                  <PanelMetric label="Confidence" value={`${broker.conf}`} color="text-blue-400" />
+                  <PanelMetric label="Total Trades" value={342} color="text-slate-300" />
+                </div>
+                <div className="w-[110px] shrink-0"><TrustScoreBadge score={parseInt(broker.conf) || 86} /></div>
+              </div>
+              <BrokerHistory winRate={parseInt(broker.success)} totalTrades={342} pnlRatio="2.4" />
+              <TradeTimeline trades={broker.trades || []} />
+            </motion.div>
+            <div className="sticky bottom-0 z-20 bg-gradient-to-t from-[#080f1c] via-[#080f1c]/90 p-6 border-t border-[#1c2433]">
+              <TransitionButton broker={broker} />
+            </div>
+          </motion.div>
+        </React.Fragment>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* --- MAIN APP ORCHESTRATOR --- */
+function App() {
+  const [selectedBroker, setSelectedBroker] = useState(null);
+  
+  // Attach global function to window so vanilla JS code can trigger React renders
+  useEffect(() => {
+    window.openReactPanel = (id) => {
+      // Find broker from the global 'brokers' array constructed in your vanilla JS script
+      const b = window.brokers.find(x => x.id === id);
+      setSelectedBroker(b);
+    };
+  }, []);
+
+  return <AnalysisPanel broker={selectedBroker} isOpen={!!selectedBroker} onClose={() => setSelectedBroker(null)} />;
+}
+
+const root = ReactDOM.createRoot(document.getElementById('react-analysis-root'));
+root.render(<App />);
+</script>
+
+    <script type="text/babel" data-type="module">
+        
+// --- TRADER DROPDOWN INJECTION ---
+(() => {
+  const { useState, useEffect, useRef } = React;
+  const { motion, AnimatePresence } = window.Motion;
+
+
+
+// Inline SVG icon components — no CDN dependency
+const LayoutDashboard = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+  </svg>
+);
+const Briefcase = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect x="2" y="7" width="20" height="14" rx="2"/>
+    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+  </svg>
+);
+const Star = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+);
+const UserPlus = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+  </svg>
+);
+const Bell = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+const Zap = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>
+);
+const Settings = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+);
+const LogOut = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+
+function DropdownItem({ icon: Icon, label, onClick, highlight }) {
+  const iconColor = highlight ? '#22c55e' : '#94a3b8';
+  return (
+    <motion.button
+      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className="w-full flex items-center gap-[18px] px-5 py-[13px] transition-colors"
+      style={{ color: '#e2e8f0' }}
+    >
+      <Icon size={20} style={{ color: iconColor, flexShrink: 0 }} />
+      <span className="text-[15px] font-medium tracking-wide">{label}</span>
+    </motion.button>
+  );
+}
+
+function TraderDropdown() {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const IconDashboard = LayoutDashboard;
+  const IconPortfolio = Briefcase;
+  const IconWatchlist = Star;
+  const IconBrokers   = UserPlus;
+  const IconAlerts    = Bell;
+  const IconSignals   = Zap;
+  const IconSettings  = Settings;
+  const IconLogout    = LogOut;
+
+  return (
+    <div className="relative z-[9999]" ref={dropdownRef}>
+      
+      {/* Target Trigger Button */}
+      <motion.button 
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className="user-avatar-pill"
+      >
+        <div className="user-avatar-circle">T</div>
+        <span className="user-avatar-name">Trader</span>
+      </motion.button>
+
+      {/* Dropdown Panel */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -5, scale: 0.95 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+            className="absolute right-0 top-11 w-[240px] bg-[#0f172a] border border-[#1e293b] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden z-[9999]"
+            style={{ transformOrigin: "top right" }}
+          >
+            {/* Header: User Summary */}
+            <div className="px-5 py-[14px] flex items-center gap-3">
+              <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center font-bold text-[18px] text-[#022c22] shadow-[0_0_8px_rgba(34,197,94,0.3)] bg-[#22c55e]">
+                T
+              </div>
+              <h3 className="text-slate-200 font-semibold text-[16px] tracking-wide">Trader</h3>
+            </div>
+            
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconDashboard} label="Dashboard" onClick={() => window.location.href='index.html'} />
+              <DropdownItem icon={IconPortfolio} label="Portfolio" onClick={() => {}} />
+              <DropdownItem icon={IconWatchlist} label="Watchlist" onClick={() => {}} />
+              <DropdownItem icon={IconBrokers} label="Followed Brokers" onClick={() => window.location.href='broker-insights-react.html'} />
+              <DropdownItem icon={IconAlerts} label="Alerts" onClick={() => {}} />
+              <DropdownItem icon={IconSignals} label="AI Signals" highlight onClick={() => {}} />
+            </div>
+
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconSettings} label="Settings" onClick={() => {}} />
+            </div>
+
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconLogout} label="Logout" onClick={() => {}} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+
+  // Ensure the DOM is ready for React to mount the dropdown
+  setTimeout(() => {
+    const rootEl = document.getElementById('trader-dropdown-root');
+    if (rootEl) {
+      const root = ReactDOM.createRoot(rootEl);
+      root.render(<TraderDropdown />);
+    }
+  }, 100);
+
+})();
+
+    </script>
+    <script src="cursor.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.smCursor) smCursor.enable();
+      });
+    </script>
+</body>
+</html>

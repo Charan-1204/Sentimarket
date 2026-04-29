@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentiMarket | Broker Full Analysis</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+  /* Exact dashboard tokens */
+  --bg:       #0d1117;
+  --bg-card:  #161b27;
+  --bg-input: #1c2333;
+  --border:   #21293a;
+  --green:    #22c55e;
+  --green-dim:rgba(34,197,94,.15);
+  --border-g: rgba(34,197,94,.3);
+  --orange:   #f97316;
+  --yellow:   #eab308;
+  --red:      #ef4444;
+  --muted:    #6b7280;
+  --text:     #e2e8f0;
+  --text-dim: #94a3b8;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Inter', sans-serif;
+  --r:        8px;
+}
+
+        html,
+        body {
+            min-height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            scroll-behavior: smooth;
+        }
+
+        /* ── PAGE ENTRY ANIMATION ── */
+        @keyframes pageEntry {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        /* ── SHIMMER SKELETON ── */
+        @keyframes shimmer {
+            0% {
+                background-position: -400px 0;
+            }
+
+            100% {
+                background-position: 400px 0;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, .04) 25%,
+                    rgba(255, 255, 255, .09) 50%,
+                    rgba(255, 255, 255, .04) 75%);
+            background-size: 800px 100%;
+            animation: shimmer 1.5s infinite linear;
+            border-radius: 8px;
+        }
+
+        /* ── SCROLL REVEAL ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity 0.55s cubic-bezier(.4, 0, .2, 1), transform 0.55s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── NEW STYLES ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(34,197,94,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,197,94,.018) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2d3748;border-radius:2px}
+/* ─── HEADER ─── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    background: #0d1420;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Bookmark button */
+.hbtn-bookmark {
+    color: var(--muted);
+}
+
+.hbtn-bookmark.bookmarked {
+    color: var(--green) !important;
+}
+
+.hbtn-bookmark.bookmarked svg {
+    fill: var(--green);
+    stroke: var(--green);
+}
+
+/* Pipe separator between button groups */
+.hbtn-sep {
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Settings button */
+.hbtn-settings {
+    color: var(--muted);
+    transition: color .15s, transform .2s;
+}
+
+.hbtn-settings:hover {
+    color: var(--text);
+}
+
+.hbtn-settings:hover svg {
+    animation: spinOnce .5s ease;
+}
+
+@keyframes spinOnce {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(90deg);
+    }
+}
+
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.search-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--text);
+    min-width: 120px;
+    cursor: pointer;
+}
+
+.search-val {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.search-label {
+    font-size: 11px;
+    letter-spacing: .5px;
+}
+
+.hbtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all .15s;
+    white-space: nowrap;
+    font-family: var(--sans);
+}
+
+.hbtn:hover {
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
+}
+
+.hbtn-star {
+    color: var(--yellow);
+}
+
+.hbtn.icon-only {
+    padding: 5px 7px;
+}
+
+/* ─── SUBNAV ─── */
+.subnav {
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+    background: #060000;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.snav-link {
+    display: block;
+    padding: 10px 16px 10px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    letter-spacing: .5px;
+    transition: all .15s;
+    margin-right: 16px;
+}
+
+.snav-link.active {
+    color: var(--text);
+    border-bottom-color: var(--green);
+}
+
+/* Misc inherited header styles from app */
+kbd {
+    background: rgba(255,255,255,.1);
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-family: var(--mono);
+    color: #fff;
+}
+.market-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.2);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    font-family: var(--mono);
+    letter-spacing: .5px;
+}
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+.user-avatar-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 8px 2px 2px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.user-avatar-pill:hover {
+    background: rgba(255,255,255,.06);
+}
+.user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    background: var(--green);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+.user-avatar-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+}
+.notif-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 10px;
+    margin-left: 2px;
+}
+.kbd-help { display: flex; align-items: center; font-size: 10px; color: var(--muted); }
+/* ── PAGE ── */
+        .ba-page {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 32px 24px 60px;
+            animation: pageEntry 0.5s cubic-bezier(.4, 0, .2, 1) 0.05s both;
+        }
+
+        /* ── BREADCRUMB ── */
+        .ba-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 24px;
+            animation: fadeIn 0.5s ease 0.15s both;
+        }
+
+        .ba-breadcrumb a {
+            color: var(--dim);
+            text-decoration: none;
+            transition: color .15s;
+        }
+
+        .ba-breadcrumb a:hover {
+            color: var(--text);
+        }
+
+        .ba-breadcrumb-sep {
+            opacity: .4;
+        }
+
+        /* ── HERO HEADER ── */
+        .ba-hero {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            animation: pageEntry 0.55s cubic-bezier(.4, 0, .2, 1) 0.1s both;
+        }
+
+        .ba-hero-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        /* Avatar with glow ring */
+        .ba-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            font-family: var(--mono);
+            flex-shrink: 0;
+            border: 2px solid;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 0 0 transparent;
+        }
+
+        .ba-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 20px;
+            border: 1.5px solid;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-color: inherit;
+        }
+
+        .ba-hero-left:hover .ba-avatar::after {
+            opacity: 0.5;
+        }
+
+        .ba-hero-left:hover .ba-avatar {
+            transform: scale(1.04);
+        }
+
+        .ba-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -.4px;
+        }
+
+        .ba-subtitle {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+        }
+
+        .ba-hero-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .ba-signal-badge {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: .5px;
+            border: 1px solid;
+            transition: all 0.2s ease;
+        }
+
+        .ba-signal-badge:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.15);
+        }
+
+        /* ── METRICS ROW ── */
+        .ba-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+            animation: pageEntry 0.6s cubic-bezier(.4, 0, .2, 1) 0.18s both;
+        }
+
+        .ba-metric {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 18px;
+            transition: all 0.25s cubic-bezier(.4, 0, .2, 1);
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ba-metric::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(34, 197, 94, .04), transparent);
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+
+        .ba-metric:hover {
+            transform: translateY(-3px);
+            border-color: rgba(34, 197, 94, .25);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .3), 0 0 20px rgba(34, 197, 94, .06);
+        }
+
+        .ba-metric:hover::before {
+            opacity: 1;
+        }
+
+        .ba-metric-lbl {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            margin-bottom: 6px;
+        }
+
+        .ba-metric-val {
+            font-size: 22px;
+            font-weight: 800;
+            font-family: var(--mono);
+        }
+
+        .ba-metric-sub {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 3px;
+        }
+
+        /* ── TWO-COLUMN LAYOUT ── */
+        .ba-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .ba-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── CARDS ── */
+        .ba-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.25s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .ba-card:hover {
+            border-color: rgba(34, 197, 94, .2);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .25), 0 0 16px rgba(34, 197, 94, .05);
+        }
+
+        .ba-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ba-card-title-badge {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid var(--border-g);
+        }
+
+        /* ── PRICE TARGET SECTION ── */
+        .pt-header {
+            margin-bottom: 12px;
+        }
+
+        .pt-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .pt-price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .pt-price {
+            font-size: 36px;
+            font-weight: 800;
+            font-family: var(--mono);
+            color: var(--text);
+        }
+
+        .pt-currency {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .pt-change-pos {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .pt-change-neg {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--red);
+        }
+
+        .pt-desc {
+            font-size: 12px;
+            color: var(--dim);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        #priceTargetChart {
+            width: 100%;
+            height: 320px;
+            display: block;
+        }
+
+        /* Chart skeleton */
+        .chart-skeleton {
+            width: 100%;
+            border-radius: 8px;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, .04) 25%,
+                    rgba(255, 255, 255, .09) 50%,
+                    rgba(255, 255, 255, .04) 75%);
+            background-size: 800px 100%;
+            animation: shimmer 1.5s infinite linear;
+        }
+
+        /* Chart tooltip */
+        .chart-tooltip {
+            position: absolute;
+            background: rgba(13, 22, 38, 0.95);
+            border: 1px solid rgba(34, 197, 94, .35);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 11px;
+            color: var(--text);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .4), 0 0 12px rgba(34, 197, 94, .1);
+            z-index: 10;
+        }
+
+        /* ── PERFORMANCE TREND ── */
+        .perf-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .perf-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .perf-badge {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(34, 197, 94, .1);
+            color: var(--green);
+            border: 1px solid rgba(34, 197, 94, .3);
+            box-shadow: 0 0 12px rgba(34, 197, 94, .15);
+        }
+
+        #perfChart {
+            width: 100%;
+            height: 220px;
+            display: block;
+        }
+
+        /* ── AI EXPLANATION ── */
+        .ai-box {
+            background: rgba(34, 197, 94, .05);
+            border: 1px solid rgba(34, 197, 94, .18);
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin-bottom: 18px;
+        }
+
+        .ai-box-label {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            color: var(--green);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-box-text {
+            font-size: 12px;
+            color: var(--dim);
+            line-height: 1.7;
+        }
+
+        /* ── TRADE HISTORY ── */
+        .trade-entry {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+            gap: 14px;
+            transition: background 0.2s;
+            border-radius: 6px;
+            margin: 0 -8px;
+            padding: 12px 8px;
+        }
+
+        .trade-entry:last-child {
+            border-bottom: none;
+        }
+
+        .trade-entry:hover {
+            background: rgba(255, 255, 255, .02);
+        }
+
+        .trade-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .trade-direction {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .4px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .trade-asset {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .trade-date {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .trade-entry-price {
+            font-size: 11px;
+            color: var(--dim);
+            font-family: var(--mono);
+            margin-top: 2px;
+        }
+
+        .trade-pnl {
+            font-size: 13px;
+            font-weight: 800;
+            font-family: var(--mono);
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        /* Win rate ring */
+        .wr-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: all 0.25s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .wr-card:hover {
+            border-color: rgba(34, 197, 94, .25);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .25), 0 0 20px rgba(34, 197, 94, .06);
+        }
+
+        .wr-ring-wrap {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .wr-ring-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .wr-ring-pct {
+            font-size: 24px;
+            font-weight: 800;
+            font-family: var(--mono);
+            color: var(--green);
+        }
+
+        .wr-ring-sub {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .wr-labels {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 8px;
+        }
+
+        .wr-label-item {
+            text-align: center;
+        }
+
+        .wr-label-val {
+            font-size: 16px;
+            font-weight: 800;
+            font-family: var(--mono);
+        }
+
+        .wr-label-sub {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            margin-top: 2px;
+        }
+
+        /* Win rate ring animation */
+        @keyframes ringDraw {
+            from {
+                stroke-dasharray: 0 10000;
+            }
+        }
+
+        .ring-animate {
+            animation: ringDraw 1.2s cubic-bezier(.4, 0, .2, 1) both;
+        }
+
+        /* Asset tags */
+        .asset-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .asset-tag {
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(59, 130, 246, .12);
+            border: 1px solid rgba(59, 130, 246, .25);
+            color: #60a5fa;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: var(--mono);
+            transition: all 0.2s;
+        }
+
+        .asset-tag:hover {
+            background: rgba(59, 130, 246, .2);
+            border-color: rgba(59, 130, 246, .5);
+        }
+
+        /* Risk meter */
+        .risk-bar-wrap {
+            background: rgba(255, 255, 255, .05);
+            border-radius: 4px;
+            height: 6px;
+            margin-top: 8px;
+        }
+
+        .risk-bar-fill {
+            height: 6px;
+            border-radius: 4px;
+            transition: width 1s cubic-bezier(.4, 0, .2, 1) 0.6s;
+            width: 0 !important;
+        }
+
+        .risk-bar-fill.animated {
+            width: var(--target-w) !important;
+        }
+
+        /* Confidence gauge */
+        .conf-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .conf-track {
+            background: rgba(255, 255, 255, .05);
+            border-radius: 20px;
+            height: 8px;
+        }
+
+        .conf-fill {
+            height: 8px;
+            border-radius: 20px;
+            transition: width 1s cubic-bezier(.4, 0, .2, 1) 0.5s;
+            width: 0 !important;
+        }
+
+        .conf-fill.animated {
+            width: var(--target-w) !important;
+        }
+
+        /* Strategy tag */
+        .strategy-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            background: rgba(168, 85, 247, .12);
+            border: 1px solid rgba(168, 85, 247, .3);
+            color: #c084fc;
+            margin-top: 4px;
+        }
+
+        /* ── FOOTER ── */
+        .ba-footer {
+            margin-top: 48px;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .ba-footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── CANVAS WRAPPER for tooltip ── */
+        .canvas-wrap {
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="header">
+    <div class="header-left">
+        <a href="index.html" class="logo" style="text-decoration:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                <polyline points="16 7 22 7 22 13" />
+            </svg>
+            <span class="logo-text">SentiMarket</span>
+        </a>
+        <!-- Live Market Status -->
+        <div class="market-status-pill" data-tip="Real-time market data active">
+            <span class="status-dot"></span>
+            LIVE &bull; MARKET OPEN
+        </div>
+        <!-- Search Pill -->
+        <div class="search-pill" style="cursor:pointer">
+            <span class="search-label" style="display:flex;align-items:center;gap:4px">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                SEARCH ASSET:
+            </span>
+            <div class="search-box">
+                <span class="search-val">Dogecoin</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+            </div>
+            <span class="search-shortcut" style="margin-left:4px"><kbd>K</kbd></span>
+        </div>
+    </div>
+    <div class="header-right">
+        <!-- Alerts with badge -->
+        <button class="hbtn" data-tip="Price & sentiment alerts">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            Alerts
+            <span class="notif-badge">3</span>
+        </button>
+        <button class="hbtn hbtn-star" data-tip="Your tracked assets">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            Portfolio
+        </button>
+        <div class="hbtn-sep"></div>
+        <!-- User avatar -->
+        <div class="user-avatar-pill" data-tip="Account & Settings">
+            <div class="user-avatar-circle">T</div>
+            <span class="user-avatar-name">Trader</span>
+        </div>
+        <button class="hbtn hbtn-settings" title="Settings" data-tip="Preferences">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+        </button>
+        <button class="hbtn hbtn-bookmark" data-tip="Bookmark this asset">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+        </button>
+    </div>
+</header>
+
+<!-- ═══════════════════ SECONDARY NAV ═══════════════════ -->
+<nav class="subnav">
+    <a class="snav-link" href="index.html">DASHBOARD</a>
+    <a class="snav-link" href="analysis.html">ANALYSIS</a>
+    <a class="snav-link active" href="broker-insights-react.html">BROKER INSIGHTS</a>
+    <a class="snav-link" href="broker-insights-react.html" style="color:var(--text);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:-2px"><polyline points="15 18 9 12 15 6" /></svg> Back to Insights</a>
+        <a class="snav-link" href="#" style="display:flex; align-items:center; gap:4px">ALERTS <span class="notif-badge" style="font-size:8px; margin-left:4px; padding: 2px 5px; border-radius:10px; background:var(--red); color:#fff;">3</span></a>
+    <a class="snav-link" href="#" style="display:flex; align-items:center; gap:4px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8h.01M11 12h1v4h1" />
+        </svg>
+        USER GUIDE
+    </a>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);padding:0 8px" class="kbd-help">
+        <kbd>K</kbd> Search &nbsp;&nbsp;
+        <kbd>B</kbd> Bookmark &nbsp;&nbsp;
+        <kbd>Esc</kbd> Close
+    </span>
+</nav>
+
+    <!-- PAGE -->
+    <div class="ba-page">
+
+        <!-- Breadcrumb -->
+        <div class="ba-breadcrumb">
+            <a href="broker-insights.html">Broker Insights</a>
+            <span class="ba-breadcrumb-sep">›</span>
+            <span id="breadcrumbName">Loading...</span>
+        </div>
+
+        <!-- Hero -->
+        <div class="ba-hero reveal visible" style="transition-delay:0.1s">
+            <div class="ba-hero-left">
+                <div class="ba-avatar" id="heroAvatar"></div>
+                <div>
+                    <div class="ba-title" id="heroName"></div>
+                    <div class="ba-subtitle" id="heroCategory"></div>
+                </div>
+            </div>
+            <div class="ba-hero-right" style="display:flex; align-items:center; gap: 12px;">
+                <button id="heroFollowBtn" onclick="this.classList.toggle('active')" style="background: transparent; border: 1px solid var(--border); border-radius: 8px; height: 32px; padding: 0 12px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; color: var(--text-dim); transition: all .2s ease; font-size:12px; font-weight:600;" onmouseover="this.style.background='rgba(255,255,255,.05)'; this.style.borderColor='rgba(255,255,255,.2)';" onmouseout="if(!this.classList.contains('active')){this.style.background='transparent'; this.style.borderColor='var(--border)';}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg> Follow
+                </button>
+                <div id="heroSignal" class="ba-signal-badge"></div>
+            </div>
+            
+            <style>
+                #heroFollowBtn.active {
+                    background: rgba(34,197,94,.1) !important;
+                    border-color: rgba(34,197,94,.5) !important;
+                    color: var(--green) !important;
+                    box-shadow: 0 0 10px rgba(34,197,94,.2);
+                }
+                #heroFollowBtn.active svg {
+                    fill: var(--green);
+                }
+            </style>
+        </div>
+
+        <!-- Metrics strips -->
+        <div class="ba-metrics" id="metricsRow"></div>
+
+        <!-- Two-column layout -->
+        <div class="ba-layout reveal visible" style="transition-delay:0.3s">
+
+            <!-- MAIN COLUMN -->
+            <div class="ba-main">
+
+                <!-- Price Target Chart -->
+                <div class="ba-card">
+                    <div class="pt-header">
+                        <div class="pt-title">Price Target</div>
+                        <div class="pt-price-row">
+                            <span class="pt-price" id="ptCurrentPrice"></span>
+                            <span class="pt-currency">USD</span>
+                            <span id="ptAvgChange" class="pt-change-pos"></span>
+                            <span id="ptAvgChangePct" class="pt-change-pos"></span>
+                        </div>
+                        <div class="pt-desc" id="ptDesc"></div>
+                    </div>
+                    <canvas id="priceTargetChart"></canvas>
+                </div>
+
+                <!-- Performance Trend -->
+                <div class="ba-card">
+                    <div class="perf-header">
+                        <div class="perf-title">Performance Trend</div>
+                        <div class="perf-badge">Outperforming Benchmark</div>
+                    </div>
+                    <canvas id="perfChart"></canvas>
+                </div>
+
+                <!-- AI Explanation -->
+                <div class="ba-card">
+                    <div class="ba-card-title">
+                        🤖 AI Signal Explanation
+                        <span class="ba-card-title-badge">LIVE ANALYSIS</span>
+                    </div>
+                    <div class="ai-box">
+                        <div class="ai-box-label">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="#22c55e">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 8v4l3 3" stroke="#080f1c" stroke-width="2" fill="none" />
+                            </svg>
+                            AI-Generated Insight
+                        </div>
+                        <div class="ai-box-text" id="aiExplanation"></div>
+                    </div>
+                </div>
+
+                <!-- Recent Trades -->
+                <div class="ba-card">
+                    <div class="ba-card-title">
+                        📊 Recent Trade History
+                        <span class="ba-card-title-badge">LIVE TIMELINE</span>
+                    </div>
+                    <div id="tradeList"></div>
+                </div>
+
+            </div>
+
+            <!-- SIDE COLUMN -->
+            <div class="ba-side">
+
+                <!-- Win Rate Ring -->
+                <div class="wr-card">
+                    <div class="ba-card-title" style="justify-content:center">Win Rate</div>
+                    <div class="wr-ring-wrap">
+                        <svg id="winRateRing" width="160" height="160"></svg>
+                        <div class="wr-ring-label">
+                            <div class="wr-ring-pct" id="winRatePct"></div>
+                            <div class="wr-ring-sub">success</div>
+                        </div>
+                    </div>
+                    <div class="wr-labels">
+                        <div class="wr-label-item">
+                            <div class="wr-label-val" style="color:var(--green)" id="winsCount"></div>
+                            <div class="wr-label-sub">Wins</div>
+                        </div>
+                        <div class="wr-label-item">
+                            <div class="wr-label-val" style="color:var(--red)" id="lossesCount"></div>
+                            <div class="wr-label-sub">Losses</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Broker Details -->
+                <div class="ba-card">
+                    <div class="ba-card-title">Broker Profile</div>
+
+                    <div style="margin-bottom:16px">
+                        <div class="ba-metric-lbl">Strategy</div>
+                        <div id="sideStrategy" class="strategy-pill"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div class="ba-metric-lbl">Covered Assets</div>
+                        <div class="asset-row" id="sideAssets"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div class="conf-label">
+                            <span class="ba-metric-lbl" style="margin-bottom:0">AI Confidence</span>
+                            <span id="confVal"
+                                style="font-size:12px;font-weight:700;color:var(--blue);font-family:var(--mono)"></span>
+                        </div>
+                        <div class="conf-track">
+                            <div class="conf-fill" id="confFill" style="background:var(--blue)"></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <div class="ba-metric-lbl">Volatility</div>
+                        <div class="conf-label" style="margin-bottom:6px">
+                            <span id="volVal"
+                                style="font-size:12px;font-weight:700;color:var(--orange);font-family:var(--mono)"></span>
+                            <span id="riskLevel" style="font-size:10px;font-weight:700"></span>
+                        </div>
+                        <div class="risk-bar-wrap">
+                            <div class="risk-bar-fill" id="volFill"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="ba-metric-lbl">Timeframe</div>
+                        <div id="sideTimeframe"
+                            style="font-size:16px;font-weight:800;font-family:var(--mono);color:var(--text);margin-top:4px">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Targets Summary -->
+                <div class="ba-card">
+                    <div class="ba-card-title">Price Targets</div>
+                    <div id="priceTargetsCards"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="ba-footer">
+            <div class="ba-footer-brand">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#22c55e">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                </svg>
+                SentiMarket Broker Intelligence Engine v3.0
+            </div>
+            <span>Data refreshes every 60 seconds • For informational purposes only</span>
+        </div>
+
+    </div>
+
+    <script src="twelve-data.js"></script>
+    <script src="coindesk-data.js"></script>
+    <script src="broker-insights.js"></script>
+    <script>
+        // ── Init ─────────────────────────────────────────
+        const params = new URLSearchParams(window.location.search);
+        const brokerId = params.get('id') || 'alphaquant';
+        const broker = getBrokerById(brokerId);
+
+        // Helpers
+        function getSignalColor(s) {
+            if (s === 'BUY') return { bg: 'rgba(34,197,94,.15)', border: 'rgba(34,197,94,.4)', color: '#22c55e' };
+            if (s === 'SELL') return { bg: 'rgba(239,68,68,.15)', border: 'rgba(239,68,68,.4)', color: '#ef4444' };
+            return { bg: 'rgba(251,191,36,.15)', border: 'rgba(251,191,36,.4)', color: '#fbbf24' };
+        }
+        function getRiskColor(l) {
+            if (l === 'Low') return '#22c55e';
+            if (l === 'Medium') return '#f97316';
+            if (l === 'High') return '#ef4444';
+            return '#dc2626';
+        }
+        function fmt(p) {
+            if (p >= 1000) return '$' + p.toLocaleString();
+            if (p >= 1) return '$' + p.toFixed(2);
+            if (p >= 0.001) return '$' + p.toFixed(5);
+            return '$' + p.toFixed(7);
+        }
+        function pct(curr, tgt) {
+            const v = ((tgt - curr) / curr * 100).toFixed(1);
+            return (tgt > curr ? '+' : '') + v + '%';
+        }
+
+        // ── Populate hero & metadata ──────────────────────
+        document.title = `SentiMarket | ${broker.name} Analysis`;
+        document.getElementById('breadcrumbName').textContent = broker.name;
+
+        // Avatar
+        const av = document.getElementById('heroAvatar');
+        av.textContent = broker.avatar;
+        av.style.cssText += `background:${broker.avatarColor}22;border-color:${broker.avatarColor}55;color:${broker.avatarColor}`;
+
+        document.getElementById('heroName').textContent = broker.name;
+        document.getElementById('heroCategory').textContent = broker.categoryLabel + ' · ' + broker.strategy;
+
+        const sc = getSignalColor(broker.recommendation || broker.lastSignal);
+        const sig = document.getElementById('heroSignal');
+        sig.textContent = (broker.recommendation || broker.lastSignal);
+        sig.style.cssText = `background:${sc.bg};border-color:${sc.border};color:${sc.color}`;
+
+        // ── Metrics row ───────────────────────────────────
+        const metrics = [
+            { label: '7D Success Rate', val: broker.successRate + '%', color: '#22c55e' },
+            { label: 'Win / Loss', val: broker.wins + 'W / ' + broker.losses + 'L', color: '#f1f5f9' },
+            { label: 'AI Confidence', val: broker.confidence + '%', color: '#3b82f6' },
+            { label: 'Volatility', val: broker.volatility + '%', color: '#f97316' },
+            { label: 'Risk Level', val: broker.riskLevel, color: getRiskColor(broker.riskLevel) },
+            { label: 'Timeframe', val: broker.timeframe, color: '#a78bfa' },
+        ];
+                document.getElementById('metricsRow').innerHTML = metrics.map((m, i) => `
+    <div class="ba-metric reveal" style="transition-delay:${0.1 + i*0.05}s">
+        <div class="ba-metric-lbl">${m.label}</div>
+        <div class="ba-metric-val" id="anim-metric-${i}" style="color:${m.color}">0</div>
+    </div>
+`).join('');
+        metrics.forEach((m, i) => setTimeout(() => animateCount(document.getElementById('anim-metric-'+i), m.val), 300));
+        setTimeout(() => animateCount(document.getElementById('winRatePct'), broker.successRate + '%'), 300);
+        setTimeout(() => animateCount(document.getElementById('winsCount'), broker.wins), 300);
+        setTimeout(() => animateCount(document.getElementById('lossesCount'), broker.losses), 300);
+
+
+        // ── Price Target Header ───────────────────────────
+        document.getElementById('ptCurrentPrice').textContent = fmt(broker.currentPrice);
+        const avgDiff = broker.avgTarget - broker.currentPrice;
+        const avgDiffPct = ((avgDiff / broker.currentPrice) * 100).toFixed(2);
+        document.getElementById('ptAvgChange').textContent = (avgDiff >= 0 ? '+' : '') + fmt(Math.abs(avgDiff)).replace('$', '');
+        document.getElementById('ptAvgChangePct').textContent = (avgDiff >= 0 ? '+' : '') + avgDiffPct + '%';
+        if (avgDiff < 0) {
+            document.getElementById('ptAvgChange').className = 'pt-change-neg';
+            document.getElementById('ptAvgChangePct').className = 'pt-change-neg';
+        }
+
+        document.getElementById('ptDesc').textContent =
+            `CoinDesk Data is connected for live market prices. Verified broker analyst forecasts are not connected, so target estimates are not displayed as factual data.`;
+
+        // ── AI Explanation ────────────────────────────────
+        document.getElementById('aiExplanation').textContent = broker.aiExplanation;
+
+        // ── Side panel ────────────────────────────────────
+        document.getElementById('winRatePct').textContent = broker.successRate + '%';
+        document.getElementById('winsCount').textContent = broker.wins;
+        document.getElementById('lossesCount').textContent = broker.losses;
+
+        // Win rate ring SVG
+        (function () {
+            const svg = document.getElementById('winRateRing');
+            const r = 68, cx = 80, cy = 80, circ = 2 * Math.PI * r;
+            const pctVal = broker.successRate / 100;
+            svg.innerHTML = `
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="10"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#22c55e" stroke-width="10"
+            stroke-dasharray="${circ * pctVal} ${circ * (1 - pctVal)}"
+            stroke-dashoffset="${circ * 0.25}"
+            stroke-linecap="round"
+            style="filter:drop-shadow(0 0 8px rgba(34,197,94,.5))"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#ef4444" stroke-width="10"
+            stroke-dasharray="${circ * (1 - pctVal)} ${circ * pctVal}"
+            stroke-dashoffset="${circ * (0.25 - pctVal)}"
+            stroke-linecap="round"
+            style="filter:drop-shadow(0 0 8px rgba(239,68,68,.3))"/>
+    `;
+        })();
+
+        document.getElementById('sideStrategy').textContent = broker.strategy;
+        document.getElementById('sideAssets').innerHTML = broker.assets.map(a =>
+            `<span class="asset-tag">${a}</span>`).join('');
+
+        const confEl = document.getElementById('confFill');
+        confEl.style.width = broker.confidence + '%';
+        document.getElementById('confVal').textContent = broker.confidence + '%';
+
+        const volFill = document.getElementById('volFill');
+        const riskColor = getRiskColor(broker.riskLevel);
+        volFill.style.width = broker.volatility + '%';
+        volFill.style.background = `linear-gradient(90deg, ${riskColor}88, ${riskColor})`;
+        document.getElementById('volVal').textContent = broker.volatility + '%';
+        document.getElementById('riskLevel').textContent = broker.riskLevel;
+        document.getElementById('riskLevel').style.color = riskColor;
+
+        document.getElementById('sideTimeframe').textContent = broker.timeframe;
+
+        // Price targets summary
+        const targets = [
+            { label: 'Max Target', val: fmt(broker.maxTarget), change: pct(broker.currentPrice, broker.maxTarget), color: '#22c55e' },
+            { label: 'Avg Target', val: fmt(broker.avgTarget), change: pct(broker.currentPrice, broker.avgTarget), color: '#16a34a' },
+            { label: 'Current Price', val: fmt(broker.currentPrice), change: '—', color: '#3b82f6' },
+            { label: 'Min Target', val: fmt(broker.minTarget), change: pct(broker.currentPrice, broker.minTarget), color: '#ef4444' },
+        ];
+        document.getElementById('priceTargetsCards').innerHTML = targets.map(t => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${t.label}</div>
+            <div style="font-size:15px;font-weight:800;font-family:var(--mono);color:${t.color}">${t.val}</div>
+        </div>
+        <div style="font-size:12px;font-weight:700;font-family:var(--mono);color:${t.change.startsWith('+') ? 'var(--green)' : t.change === '—' ? 'var(--dim)' : 'var(--red)'}">${t.change}</div>
+    </div>
+`).join('');
+
+        // Verified recent trades
+        const TRADES = [];
+
+        document.getElementById('tradeList').innerHTML = TRADES.length ? TRADES.map(t => {
+            const dirBg = t.dir === 'LONG' ? 'rgba(34,197,94,.14)' : 'rgba(239,68,68,.14)';
+            const dirColor = t.dir === 'LONG' ? '#22c55e' : '#ef4444';
+            const dotColor = t.win ? '#22c55e' : '#ef4444';
+            return `
+        <div class="trade-entry">
+            <div class="trade-dot" style="background:${dotColor}"></div>
+            <div class="trade-direction" style="background:${dirBg};color:${dirColor};border:1px solid ${dirColor}44">${t.dir}</div>
+            <div>
+                <div class="trade-asset">${t.asset} <span class="trade-date">${t.date}</span></div>
+                <div class="trade-entry-price">Entry: ${fmt(t.entry)}</div>
+            </div>
+            <div class="trade-pnl" style="color:${t.win ? 'var(--green)' : 'var(--red)'}">
+                ${t.pnl}<br>
+                <span style="font-size:10px;opacity:.7">${t.pct}</span>
+            </div>
+        </div>
+    `;
+        }).join('') : '<div class="trade-entry">No verified broker trade feed connected.</div>';
+
+
+        // ═══════════════════════════════════════════════
+        //  PRICE TARGET CHART  (Yahoo-Finance style)
+        // ═══════════════════════════════════════════════
+        function drawPriceTargetChart() {
+            const canvas = document.getElementById('priceTargetChart');
+            if (!canvas) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = 320 * dpr;
+            canvas.style.height = '320px';
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = 320;
+
+            const pastMonths = 24, forecastMonths = 12, total = pastMonths + forecastMonths;
+            const PAD = { l: 16, r: 110, t: 30, b: 46 };
+            const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+
+            const pastData = Array.from({ length: pastMonths }, () => broker.currentPrice);
+
+            const curr = broker.currentPrice, maxT = broker.maxTarget, avgT = broker.avgTarget, minT = broker.minTarget;
+            const allVals = [...pastData, maxT, minT];
+            const dMin = Math.min(...allVals) * 0.88, dMax = Math.max(...allVals) * 1.08;
+
+            function toX(i) { return PAD.l + (i / (total - 1)) * cW; }
+            function toY(v) { return PAD.t + cH - ((v - dMin) / (dMax - dMin)) * cH; }
+
+            const splitX = toX(pastMonths - 1);
+            const fStartX = toX(pastMonths);
+            const fEndX = toX(total - 1);
+            const currY = toY(curr), maxY = toY(maxT), avgY = toY(avgT), minY = toY(minT);
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Grid lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = PAD.t + (i / 5) * cH;
+                ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W - PAD.r, y); ctx.stroke();
+            }
+
+            // Past price fill
+            const pastG = ctx.createLinearGradient(0, PAD.t, 0, PAD.t + cH);
+            pastG.addColorStop(0, 'rgba(59,130,246,0.22)');
+            pastG.addColorStop(1, 'rgba(59,130,246,0.01)');
+            ctx.beginPath();
+            pastData.forEach((v, i) => {
+                const x = toX(i), y = toY(v);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.lineTo(splitX, PAD.t + cH); ctx.lineTo(PAD.l, PAD.t + cH); ctx.closePath();
+            ctx.fillStyle = pastG; ctx.fill();
+
+            // Past price line
+            ctx.beginPath();
+            pastData.forEach((v, i) => {
+                const x = toX(i), y = toY(v);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2.2; ctx.stroke();
+
+            // Green forecast zone (curr → max/avg)
+            const greenG = ctx.createLinearGradient(fStartX, 0, fEndX, 0);
+            greenG.addColorStop(0, 'rgba(34,197,94,0.04)');
+            greenG.addColorStop(1, 'rgba(34,197,94,0.22)');
+            ctx.beginPath();
+            ctx.moveTo(fStartX, currY);
+            ctx.lineTo(fEndX, maxY);
+            ctx.lineTo(fEndX, avgY);
+            ctx.closePath();
+            ctx.fillStyle = greenG; ctx.fill();
+
+            // Green dashed – max line
+            ctx.beginPath(); ctx.moveTo(fStartX, currY); ctx.lineTo(fEndX, maxY);
+            ctx.strokeStyle = 'rgba(34,197,94,0.55)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.stroke();
+            // Green solid – avg line
+            ctx.beginPath(); ctx.moveTo(fStartX, currY); ctx.lineTo(fEndX, avgY);
+            ctx.strokeStyle = 'rgba(34,197,94,0.9)'; ctx.lineWidth = 1.8; ctx.setLineDash([]); ctx.stroke();
+
+            // Red forecast zone (curr → min)
+            const redG = ctx.createLinearGradient(fStartX, 0, fEndX, 0);
+            redG.addColorStop(0, 'rgba(239,68,68,0.04)');
+            redG.addColorStop(1, 'rgba(239,68,68,0.22)');
+            ctx.beginPath();
+            ctx.moveTo(fStartX, currY);
+            ctx.lineTo(fEndX, minY);
+            ctx.lineTo(fEndX, currY + 1);
+            ctx.closePath();
+            ctx.fillStyle = redG; ctx.fill();
+
+            ctx.beginPath(); ctx.moveTo(fStartX, currY); ctx.lineTo(fEndX, minY);
+            ctx.strokeStyle = 'rgba(239,68,68,0.65)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Divider
+            ctx.beginPath(); ctx.moveTo(splitX, PAD.t); ctx.lineTo(splitX, PAD.t + cH);
+            ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 1; ctx.stroke();
+
+            // Horizontal current-price dashed
+            ctx.beginPath(); ctx.moveTo(splitX, currY); ctx.lineTo(fEndX, currY);
+            ctx.strokeStyle = 'rgba(59,130,246,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Right-side labels
+            function drawRightLabel(y, text, sub, bg, textColor = '#fff') {
+                const lx = W - PAD.r + 6, lw = PAD.r - 8;
+                ctx.fillStyle = bg;
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(lx, y - 13, lw, 26, 5);
+                else ctx.rect(lx, y - 13, lw, 26);
+                ctx.fill();
+                ctx.fillStyle = textColor;
+                ctx.font = 'bold 10px Inter,sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, lx + lw / 2, y - 1);
+                if (sub) {
+                    ctx.font = '9px Inter,sans-serif';
+                    ctx.fillText(sub, lx + lw / 2, y + 11);
+                }
+            }
+
+            // Left badges inside forecast area
+            function drawLeftBadge(y, text, bg) {
+                const bw = 92, bx = fEndX - bw - 6;
+                ctx.fillStyle = bg;
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(bx, y - 11, bw, 22, 5);
+                else ctx.rect(bx, y - 11, bw, 22);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 9px Inter,sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(text, bx + 7, y + 4);
+            }
+
+            drawLeftBadge(maxY, `Max ${pct(curr, maxT)}`, '#16a34a');
+            drawLeftBadge(avgY, `Avg ${pct(curr, avgT)}`, '#15803d');
+            drawLeftBadge(minY, `Min ${pct(curr, minT)}`, '#dc2626');
+
+            drawRightLabel(maxY, fmt(maxT), null, '#22c55e', '#000');
+            drawRightLabel(avgY, fmt(avgT), null, '#16a34a', '#fff');
+            drawRightLabel(currY, 'Current', fmt(curr), '#3b82f6', '#fff');
+            drawRightLabel(minY, fmt(minT), null, '#ef4444', '#fff');
+
+            // X-axis labels
+            const now = new Date(2026, 2, 1);
+            const start = new Date(now); start.setMonth(start.getMonth() - 24);
+            const mNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            ctx.fillStyle = 'rgba(100,120,150,0.75)';
+            ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'center';
+            const step = Math.ceil(total / 9);
+            for (let i = 0; i < total; i += step) {
+                const d = new Date(start); d.setMonth(d.getMonth() + i);
+                const label = d.getMonth() === 0 ? String(d.getFullYear()) : mNames[d.getMonth()];
+                ctx.fillText(label, toX(i), PAD.t + cH + 18);
+            }
+
+            // Section labels
+            ctx.fillStyle = 'rgba(100,120,150,0.6)';
+            ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('PAST 2Y', PAD.l + (splitX - PAD.l) / 2, PAD.t + cH + 36);
+            ctx.fillText('1Y FORECAST', splitX + (fEndX - splitX) / 2, PAD.t + cH + 36);
+        }
+
+
+        // ═══════════════════════════════════════════════
+        //  PERFORMANCE TREND CHART  (glowing green curve)
+        // ═══════════════════════════════════════════════
+        function drawPerfChart() {
+            const canvas = document.getElementById('perfChart');
+            if (!canvas) return;
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = 220 * dpr;
+            canvas.style.height = '220px';
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = 220;
+            const PAD = { l: 0, r: 0, t: 10, b: 10 };
+            const cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+
+            // Use broker sparkData interpolated as smooth sine-like wave
+            const pts = broker.sparkData;
+            const minV = Math.min(...pts), maxV = Math.max(...pts);
+            const range = maxV - minV || 1;
+
+            // Build smooth curve via cardinal spline
+            function toX(i) { return PAD.l + (i / (pts.length - 1)) * cW; }
+            function toY(v) { return PAD.t + cH - ((v - minV) / range) * cH * 0.85 - cH * 0.07; }
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Background fill below curve
+            const grad = ctx.createLinearGradient(0, PAD.t, 0, PAD.t + cH);
+            grad.addColorStop(0, 'rgba(34,197,94,0.32)');
+            grad.addColorStop(0.6, 'rgba(34,197,94,0.08)');
+            grad.addColorStop(1, 'rgba(34,197,94,0.01)');
+
+            function drawSmooth(fill) {
+                ctx.beginPath();
+                ctx.moveTo(toX(0), toY(pts[0]));
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const x0 = toX(i), y0 = toY(pts[i]);
+                    const x1 = toX(i + 1), y1 = toY(pts[i + 1]);
+                    const cpx = (x0 + x1) / 2;
+                    ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+                }
+                if (fill) {
+                    ctx.lineTo(toX(pts.length - 1), PAD.t + cH);
+                    ctx.lineTo(PAD.l, PAD.t + cH);
+                    ctx.closePath();
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                }
+            }
+
+            drawSmooth(true);
+            drawSmooth(false);
+
+            // Glow stroke (wide, blurry – simulate with layered strokes)
+            ctx.save();
+            ctx.filter = 'blur(6px)';
+            ctx.beginPath();
+            ctx.moveTo(toX(0), toY(pts[0]));
+            for (let i = 0; i < pts.length - 1; i++) {
+                const x0 = toX(i), y0 = toY(pts[i]);
+                const x1 = toX(i + 1), y1 = toY(pts[i + 1]);
+                const cpx = (x0 + x1) / 2;
+                ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+            }
+            ctx.strokeStyle = 'rgba(34,197,94,0.9)';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+            ctx.restore();
+
+            // Crisp top stroke
+            ctx.beginPath();
+            ctx.moveTo(toX(0), toY(pts[0]));
+            for (let i = 0; i < pts.length - 1; i++) {
+                const x0 = toX(i), y0 = toY(pts[i]);
+                const x1 = toX(i + 1), y1 = toY(pts[i + 1]);
+                const cpx = (x0 + x1) / 2;
+                ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+            }
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+
+        // ── Render charts after layout paint ─────────────
+        window.addEventListener('load', async () => {
+            const provider = window.SentiPrimaryData || window.SentiMarketData;
+            if (provider) {
+                try {
+                    const latest = await provider.getLatest(broker.lastSignalAsset);
+                    broker.currentPrice = latest.price;
+                    broker.maxTarget = latest.price;
+                    broker.avgTarget = latest.price;
+                    broker.minTarget = latest.price;
+                    document.getElementById('ptCurrentPrice').textContent = fmt(broker.currentPrice);
+                    document.getElementById('ptAvgChange').textContent = '+0.00';
+                    document.getElementById('ptAvgChangePct').textContent = '+0.00%';
+                    document.getElementById('aiExplanation').textContent = `${broker.lastSignalAsset} current price is sourced from CoinDesk Data. Verified broker forecasts and social claims are hidden until a verified broker/forecast data source is connected.`;
+                } catch (error) { }
+            }
+            drawPriceTargetChart();
+            drawPerfChart();
+        });
+        window.addEventListener('resize', () => {
+            drawPriceTargetChart();
+            drawPerfChart();
+        });
+    </script>
+    <script src="cursor.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.smCursor) smCursor.enable();
+        });
+    </script>
+</body>
+
+</html>

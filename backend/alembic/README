@@ -1,0 +1,10 @@
+Alembic migrations live in this folder.
+
+Run:
+  alembic upgrade head
+
+If your tables already exist (e.g. created via `Base.metadata.create_all()`), mark the DB as up-to-date without re-creating:
+  alembic stamp head
+
+To create a new migration:
+  alembic revision --autogenerate -m "message"

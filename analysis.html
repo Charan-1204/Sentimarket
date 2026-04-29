@@ -1,0 +1,3240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>SentiMarket — Analysis Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background: #080f1c;
+            color: #e2e8f0;
+            font-size: 13px
+        }
+
+        :root {
+  /* Exact dashboard tokens */
+  --bg:       #0d1117;
+  --bg-card:  #161b27;
+  --bg-input: #1c2333;
+  --border:   #21293a;
+  --green:    #22c55e;
+  --green-dim:rgba(34,197,94,.15);
+  --border-g: rgba(34,197,94,.3);
+  --orange:   #f97316;
+  --yellow:   #eab308;
+  --red:      #ef4444;
+  --muted:    #6b7280;
+  --text:     #e2e8f0;
+  --text-dim: #94a3b8;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Inter', sans-serif;
+  --r:        8px;
+}
+
+
+        button {
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+            font-size: 12px;
+            transition: all .15s
+        }
+
+        input,
+        select {
+            font-family: inherit;
+            font-size: 12px
+        }
+
+        /* ── LAYOUT ── */
+        #app {
+            display: grid;
+            grid-template-rows: 48px auto 44px 1fr 180px; /* Header, Subnav, Actionbar, Chart, Bottom */
+            height: 100vh;
+            overflow: hidden
+        }
+
+        /* ── SUBNAV ──
+        .subnav {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 0 12px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .snav-link {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .6px;
+            color: var(--muted);
+            padding: 0 12px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: color .15s, border-color .15s;
+        }
+
+        .snav-link:hover {
+            color: var(--dim);
+        }
+
+        .snav-link.active {
+            color: var(--green);
+            border-bottom-color: var(--green);
+        } */
+
+        /* ── ACTION BAR (formerly TOP BAR) ── */
+        #actionbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 10px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .tb-logo {
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--text);
+            margin-right: 8px;
+            white-space: nowrap
+        }
+
+        .tb-logo span {
+            color: var(--green)
+        }
+
+        .tb-divider {
+            width: 1px;
+            height: 22px;
+            background: var(--border);
+            flex-shrink: 0;
+            margin: 0 4px
+        }
+
+        .tb-asset-sel {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 8px;
+            border-radius: var(--r);
+        }
+
+        .tb-price {
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+            white-space: nowrap
+        }
+
+        .tb-chg {
+            font-family: var(--mono);
+            font-size: 11px;
+            white-space: nowrap
+        }
+
+        .tb-chg.up {
+            color: var(--green)
+        }
+
+        .tb-chg.dn {
+            color: var(--red)
+        }
+
+        /* Timeframe buttons */
+        .tf-group {
+            display: flex;
+            gap: 2px
+        }
+
+        .tf-btn {
+            background: transparent;
+            color: var(--dim);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            transition: all .15s;
+            white-space: nowrap;
+        }
+
+        .tf-btn:hover {
+            background: var(--bg3);
+            color: var(--text)
+        }
+
+        .tf-btn.active {
+            background: var(--green-dim);
+            color: var(--green);
+            border-color: var(--border-g)
+        }
+
+        /* Top bar action buttons */
+        .tb-btn {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            padding: 4px 10px;
+            border-radius: var(--r);
+            white-space: nowrap;
+        }
+
+        .tb-btn:hover {
+            border-color: rgba(255, 255, 255, .2);
+            color: var(--text)
+        }
+
+        .tb-btn.active {
+            border-color: var(--border-g);
+            color: var(--green);
+            background: var(--green-dim)
+        }
+
+        .btn-buy {
+            background: var(--green);
+            color: #000;
+            font-weight: 700;
+            padding: 5px 18px;
+            border-radius: var(--r)
+        }
+
+        .btn-buy:hover {
+            background: #16a34a;
+            box-shadow: 0 0 12px rgba(34, 197, 94, .35)
+        }
+
+        .btn-sell {
+            background: var(--red);
+            color: #fff;
+            font-weight: 700;
+            padding: 5px 18px;
+            border-radius: var(--r)
+        }
+
+        .btn-sell:hover {
+            background: #dc2626;
+            box-shadow: 0 0 12px rgba(239, 68, 68, .35)
+        }
+
+        .auto-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            display: inline-block;
+            margin-right: 4px;
+            animation: blink 1.4s infinite
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        .tb-spacer {
+            flex: 1
+        }
+
+        /* ── MIDDLE AREA ── */
+        #midrow {
+            display: grid;
+            grid-template-columns: 44px 1fr 230px;
+            overflow: hidden
+        }
+
+        /* ── DRAWING TOOLBAR ── */
+        #toolbar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 0;
+            overflow-y: auto;
+        }
+
+        .tool-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--dim);
+            display: grid;
+            place-items: center;
+            font-size: 16px;
+            position: relative;
+            transition: all .15s;
+            flex-shrink: 0;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg3);
+            color: var(--text);
+            border-color: var(--border)
+        }
+
+        .tool-btn.active {
+            background: var(--green-dim);
+            color: var(--green);
+            border-color: var(--border-g)
+        }
+
+        .tool-sep {
+            width: 24px;
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0
+        }
+
+        .tool-tooltip {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #1e2d42;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .15s;
+            z-index: 50;
+        }
+
+        .tool-btn:hover .tool-tooltip {
+            opacity: 1
+        }
+
+        /* ── CHART WRAPPER ── */
+        #chartWrap {
+            position: relative;
+            background: var(--bg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chartContainer {
+            flex: 1;
+            position: relative
+        }
+
+        #lwChart {
+            width: 100%;
+            height: 100%
+        }
+
+        #drawCanvas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+            cursor: crosshair;
+        }
+
+        #drawCanvas.drawing {
+            pointer-events: auto
+        }
+
+        /* crosshair info overlay */
+        #crosshairInfo {
+            position: absolute;
+            top: 8px;
+            left: 60px;
+            z-index: 20;
+            background: rgba(13, 22, 38, .85);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--dim);
+            pointer-events: none;
+            display: none;
+        }
+
+        /* price line label */
+        #priceTag {
+            position: absolute;
+            right: 0;
+            z-index: 20;
+            background: var(--green);
+            color: #000;
+            font-weight: 700;
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 3px 0 0 3px;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* volume bar at bottom of chart */
+        #volumeContainer {
+            height: 60px;
+            position: relative
+        }
+
+        #lwVolume {
+            width: 100%;
+            height: 100%
+        }
+
+        /* indicator panel */
+        #indicatorPanel {
+            position: absolute;
+            top: 44px;
+            left: 50px;
+            z-index: 30;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            width: 220px;
+            display: none;
+        }
+
+        #indicatorPanel.open {
+            display: block
+        }
+
+        .ind-title {
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+            font-size: 12px
+        }
+
+        .ind-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .ind-row:last-child {
+            border: none
+        }
+
+        .ind-lbl {
+            color: var(--dim);
+            font-size: 12px
+        }
+
+        .toggle-sw {
+            width: 34px;
+            height: 18px;
+            border-radius: 9px;
+            background: var(--muted);
+            position: relative;
+            cursor: pointer;
+            transition: background .2s;
+            border: none;
+            flex-shrink: 0;
+        }
+
+        .toggle-sw.on {
+            background: var(--green)
+        }
+
+        .toggle-sw::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            top: 3px;
+            left: 3px;
+            transition: left .2s;
+        }
+
+        .toggle-sw.on::after {
+            left: 19px
+        }
+
+        /* ── ORDER PANEL ── */
+        #orderPanel {
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .op-title {
+            font-weight: 700;
+            color: var(--text);
+            font-size: 13px
+        }
+
+        .op-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            overflow: hidden
+        }
+
+        .op-tog-btn {
+            padding: 7px;
+            text-align: center;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--dim);
+            transition: all .15s;
+            font-size: 12px;
+        }
+
+        .op-tog-btn.buy.active {
+            background: var(--green-dim);
+            color: var(--green)
+        }
+
+        .op-tog-btn.sell.active {
+            background: var(--red-dim);
+            color: var(--red)
+        }
+
+        .op-sect-label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 3px
+        }
+
+        .op-input {
+            width: 100%;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 7px 10px;
+            border-radius: var(--r);
+            outline: none;
+        }
+
+        .op-input:focus {
+            border-color: var(--border-g)
+        }
+
+        .order-type-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px
+        }
+
+        .ot-btn {
+            padding: 6px;
+            border-radius: var(--r);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--dim);
+            font-weight: 600;
+            transition: all .15s;
+        }
+
+        .ot-btn.active {
+            border-color: var(--border-g);
+            background: var(--green-dim);
+            color: var(--green)
+        }
+
+        .op-summary {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .sum-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px
+        }
+
+        .sum-k {
+            color: var(--muted)
+        }
+
+        .sum-v {
+            color: var(--text);
+            font-family: var(--mono);
+            font-weight: 600
+        }
+
+        .sum-v.up {
+            color: var(--green)
+        }
+
+        .sum-v.dn {
+            color: var(--red)
+        }
+
+        .op-confirm {
+            width: 100%;
+            height: 54px;
+            padding: 0 24px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 15px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .op-confirm.buy {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #022c22;
+            box-shadow: 
+                0 4px 15px rgba(34, 197, 94, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .op-confirm.buy:hover {
+            box-shadow: 
+                0 8px 25px rgba(34, 197, 94, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #2edb6d, #16a34a);
+        }
+
+        .op-confirm.sell {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            box-shadow: 
+                0 4px 15px rgba(239, 68, 68, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .op-confirm.sell:hover {
+            box-shadow: 
+                0 8px 25px rgba(239, 68, 68, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #ff5a5a, #dc2626);
+        }
+
+        .op-balance {
+            background: rgba(34, 197, 94, .06);
+            border: 1px solid var(--border-g);
+            border-radius: var(--r);
+            padding: 8px 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .op-bal-lbl {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .4px
+        }
+
+        .op-bal-val {
+            font-family: var(--mono);
+            font-weight: 700;
+            color: var(--green);
+            font-size: 13px
+        }
+
+        .op-risk {
+            background: rgba(234, 179, 8, .06);
+            border: 1px solid rgba(234, 179, 8, .2);
+            border-radius: var(--r);
+            padding: 6px 10px;
+            font-size: 10px;
+            color: var(--yellow);
+        }
+
+        /* ── BOTTOM PANEL ── */
+        #bottomPanel {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .bp-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0
+        }
+
+        .bp-tab {
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all .15s;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+        }
+
+        .bp-tab:hover {
+            color: var(--dim)
+        }
+
+        .bp-tab.active {
+            color: var(--green);
+            border-bottom-color: var(--green)
+        }
+
+        .bp-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 12px
+        }
+
+        .bp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px
+        }
+
+        .bp-table th {
+            color: var(--muted);
+            text-align: left;
+            padding: 4px 8px;
+            font-weight: 600;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .bp-table td {
+            padding: 5px 8px;
+            color: var(--dim);
+            border-bottom: 1px solid rgba(255, 255, 255, .03)
+        }
+
+        .bp-table td.up {
+            color: var(--green)
+        }
+
+        .bp-table td.dn {
+            color: var(--red)
+        }
+
+        .bp-table td.sym {
+            color: var(--text);
+            font-weight: 700;
+            font-family: var(--mono)
+        }
+
+        .bp-empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 24px;
+            font-size: 12px
+        }
+
+        .bp-cancel {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--red);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .bp-cancel:hover {
+            background: var(--red-dim)
+        }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 200px;
+            right: 16px;
+            z-index: 999;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 12px;
+            display: none;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .5);
+        }
+
+        #toast.success {
+            border-color: var(--border-g);
+            color: var(--green)
+        }
+
+        #toast.error {
+            border-color: rgba(239, 68, 68, .3);
+            color: var(--red)
+        }
+
+        /* ── NEW HEADER STYLES ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(34,197,94,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,197,94,.018) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2d3748;border-radius:2px}
+/* ─── HEADER ─── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    background: #0d1420;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Bookmark button */
+.hbtn-bookmark {
+    color: var(--muted);
+}
+
+.hbtn-bookmark.bookmarked {
+    color: var(--green) !important;
+}
+
+.hbtn-bookmark.bookmarked svg {
+    fill: var(--green);
+    stroke: var(--green);
+}
+
+/* Pipe separator between button groups */
+.hbtn-sep {
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Settings button */
+.hbtn-settings {
+    color: var(--muted);
+    transition: color .15s, transform .2s;
+}
+
+.hbtn-settings:hover {
+    color: var(--text);
+}
+
+.hbtn-settings:hover svg {
+    animation: spinOnce .5s ease;
+}
+
+@keyframes spinOnce {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(90deg);
+    }
+}
+
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.search-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--text);
+    min-width: 120px;
+    cursor: pointer;
+}
+
+.search-val {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.search-label {
+    font-size: 11px;
+    letter-spacing: .5px;
+}
+
+.hbtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all .15s;
+    white-space: nowrap;
+    font-family: var(--sans);
+}
+
+.hbtn:hover {
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
+}
+
+.hbtn-star {
+    color: var(--yellow);
+}
+
+.hbtn.icon-only {
+    padding: 5px 7px;
+}
+
+/* ─── SUBNAV ─── */
+.subnav {
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+    background: #060000;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.snav-link {
+    display: block;
+    padding: 10px 16px 10px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    letter-spacing: .5px;
+    transition: all .15s;
+    margin-right: 16px;
+}
+
+.snav-link.active {
+    color: var(--text);
+    border-bottom-color: var(--green);
+}
+
+/* Misc inherited header styles from app */
+kbd {
+    background: rgba(255,255,255,.1);
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-family: var(--mono);
+    color: #fff;
+}
+.market-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.2);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    font-family: var(--mono);
+    letter-spacing: .5px;
+}
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+.user-avatar-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 8px 2px 2px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.user-avatar-pill:hover {
+    background: rgba(255,255,255,.06);
+}
+.user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    background: var(--green);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+.user-avatar-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+}
+.notif-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 10px;
+    margin-left: 2px;
+}
+.kbd-help { display: flex; align-items: center; font-size: 10px; color: var(--muted); }
+/* ── END HEADER STYLES ── */
+/* ════════════════════════════════════════
+           UNIFIED DESIGN SYSTEM — matches dashboard
+        ════════════════════════════════════════ */
+
+        /* ── Align to dashboard palette ── */
+        :root {
+            --bg: #0d1117;
+            --bg-card: #0D1420;
+            --bg3: var(--bg-card);
+            --border: #21293a;
+            --border-g: rgba(34, 197, 94, .2);
+            --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, .12);
+            --red: #ef4444;
+            --red-dim: rgba(239, 68, 68, .1);
+            --text: #e2e8f0;
+            --dim: #94a3b8;
+            --muted: #6b7280;
+            --mono: 'JetBrains Mono', monospace;
+            --r: 8px;
+        }
+
+        /* ── Page fade-in ── */
+        @keyframes pageIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body {
+            animation: pageIn .28s ease both;
+        }
+
+        /* ── Panels — soft card feel ── */
+        #topbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, .03);
+        }
+
+        .subnav {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+        }
+
+        #toolbar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+        }
+
+        #orderPanel {
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            padding: 16px;
+            gap: 12px;
+        }
+
+        #bottomPanel {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+        }
+
+        #chartWrap {
+            background: var(--bg);
+        }
+
+        /* ── Card containers — unified radius + shadow ── */
+        #chartContainer {
+            border-radius: 0;
+        }
+
+        /* Wrap chart and order panel with card feel */
+        #midrow {
+            gap: 0;
+            padding: 10px;
+            background: var(--bg);
+            display: grid;
+            grid-template-columns: 44px 1fr 240px;
+            gap: 10px;
+        }
+
+        #chartWrap {
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .25);
+            overflow: hidden;
+        }
+
+        #orderPanel {
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .25);
+        }
+
+        #toolbar {
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .2);
+        }
+
+        #bottomPanel {
+            border-top: 1px solid var(--border);
+            margin: 0 10px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .2);
+            overflow: hidden;
+        }
+
+        /* ── Card hover glow — matches dashboard kpi-card ── */
+        #chartWrap:hover {
+            border-color: rgba(34, 197, 94, .15);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .3), 0 0 0 1px rgba(34, 197, 94, .08);
+            transition: border-color .25s, box-shadow .25s;
+        }
+
+        #orderPanel:hover {
+            border-color: rgba(34, 197, 94, .15);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .3), 0 0 0 1px rgba(34, 197, 94, .08);
+            transition: border-color .25s, box-shadow .25s;
+        }
+
+        /* ── Typography — match dashboard ── */
+        body,
+        button,
+        input,
+        select {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+        }
+
+        .op-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .3px;
+            color: var(--dim);
+            text-transform: uppercase;
+        }
+
+        .op-sect-label {
+            font-size: 10px;
+            letter-spacing: .6px;
+        }
+
+        .bp-tab {
+            font-size: 11px;
+            letter-spacing: .4px;
+        }
+
+        /* ── Subnav — match dashboard .snav-link ── */
+        /* .snav-link {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+        }
+
+        .snav-link.active {
+            color: var(--green);
+            border-bottom-color: var(--green);
+        }
+
+        .snav-link:hover {
+            color: var(--dim);
+        } */
+
+        /* ── Topbar buttons — match dashboard .hbtn feel ── */
+        .tb-btn {
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tb-btn:hover {
+            background: rgba(255, 255, 255, .06);
+            color: var(--dim);
+            border-color: rgba(255, 255, 255, .14);
+        }
+
+        .tb-btn.active {
+            background: var(--green-dim);
+            color: var(--green);
+            border-color: var(--border-g);
+        }
+
+        /* ── Order panel inputs ── */
+        .op-input {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            color: var(--text);
+            padding: 8px 10px;
+            transition: border-color .15s;
+        }
+
+        .op-input:focus {
+            border-color: var(--border-g);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, .08);
+        }
+
+        /* ── Bottom panel table ── */
+        .bp-table th {
+            font-size: 10px;
+            letter-spacing: .5px;
+            color: var(--muted);
+        }
+
+        .bp-table td {
+            font-size: 12px;
+        }
+
+        /* ── Page-exit fade (JS-driven via .page-exit class) ── */
+        .page-exit {
+            animation: pageOut .22s ease forwards !important;
+        }
+
+        @keyframes pageOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+        }
+
+        /* ── NEW HEADER STYLES ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(34,197,94,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,197,94,.018) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2d3748;border-radius:2px}
+/* ─── HEADER ─── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    background: #0d1420;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Bookmark button */
+.hbtn-bookmark {
+    color: var(--muted);
+}
+
+.hbtn-bookmark.bookmarked {
+    color: var(--green) !important;
+}
+
+.hbtn-bookmark.bookmarked svg {
+    fill: var(--green);
+    stroke: var(--green);
+}
+
+/* Pipe separator between button groups */
+.hbtn-sep {
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Settings button */
+.hbtn-settings {
+    color: var(--muted);
+    transition: color .15s, transform .2s;
+}
+
+.hbtn-settings:hover {
+    color: var(--text);
+}
+
+.hbtn-settings:hover svg {
+    animation: spinOnce .5s ease;
+}
+
+@keyframes spinOnce {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(90deg);
+    }
+}
+
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.search-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--text);
+    min-width: 120px;
+    cursor: pointer;
+}
+
+.search-val {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.search-label {
+    font-size: 11px;
+    letter-spacing: .5px;
+}
+
+.hbtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all .15s;
+    white-space: nowrap;
+    font-family: var(--sans);
+}
+
+.hbtn:hover {
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
+}
+
+.hbtn-star {
+    color: var(--yellow);
+}
+
+.hbtn.icon-only {
+    padding: 5px 7px;
+}
+
+/* ─── SUBNAV ─── */
+.subnav {
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+    background: #060000;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.snav-link {
+    display: block;
+    padding: 10px 16px 10px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    letter-spacing: .5px;
+    transition: all .15s;
+    margin-right: 16px;
+}
+
+.snav-link.active {
+    color: var(--text);
+    border-bottom-color: var(--green);
+}
+
+/* Misc inherited header styles from app */
+kbd {
+    background: rgba(255,255,255,.1);
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-family: var(--mono);
+    color: #fff;
+}
+.market-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.2);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    font-family: var(--mono);
+    letter-spacing: .5px;
+}
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+.user-avatar-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 8px 2px 2px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.user-avatar-pill:hover {
+    background: rgba(255,255,255,.06);
+}
+.user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    background: var(--green);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+.user-avatar-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+}
+.notif-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 10px;
+    margin-left: 2px;
+}
+.kbd-help { display: flex; align-items: center; font-size: 10px; color: var(--muted); }
+/* ── END HEADER STYLES ── */
+/* ════════════════════════════════════════════════
+           STRUCTURAL LAYOUT — 24px Grid · Rounded-2xl Cards
+        ════════════════════════════════════════════════ */
+
+        /* ── Topbar: same height + padding as dashboard header ── */
+        #topbar {
+            padding: 0 24px;
+            gap: 10px;
+        }
+
+        .subnav {
+            padding: 0 24px;
+        }
+
+        /* ── Mid-row: 24px grid spacing ── */
+        #midrow {
+            padding: 16px 24px;
+            gap: 16px;
+        }
+
+        /* ── Chart card: rounded-2xl + stronger shadow ── */
+        #chartWrap {
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, .35),
+                0 1px 0 rgba(255, 255, 255, .04) inset;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Drawing toolbar: tall pill card ── */
+        #toolbar {
+            border-radius: 14px;
+            padding: 8px 0;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .3);
+            transition: all 0.3s ease;
+        }
+
+        /* ── Order panel: full card treatment ── */
+        #orderPanel {
+            border-radius: 14px;
+            padding: 20px;
+            gap: 14px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, .35),
+                0 1px 0 rgba(255, 255, 255, .04) inset;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .op-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            color: var(--dim);
+            margin-bottom: 2px;
+        }
+
+        .op-balance {
+            background: rgba(34, 197, 94, .04);
+            border: 1px solid var(--border-g);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .op-bal-lbl {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            margin-bottom: 2px;
+        }
+
+        .op-bal-val {
+            font-size: 22px;
+            font-weight: 800;
+            font-family: var(--mono);
+            color: var(--green);
+            line-height: 1;
+        }
+
+        /* Quick-action buttons within balance block */
+        .op-bal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-start;
+            width: 100%;
+        }
+
+        /* ── Premium Pulse Animations ── */
+        @keyframes greenPulse {
+            0%   { box-shadow: 0 0 0 2px #08101b, 0 0 0 4px var(--green), 0 0 8px rgba(34, 197, 94, 0.5); }
+            50%  { box-shadow: 0 0 0 2px #08101b, 0 0 0 4px var(--green), 0 0 18px rgba(34, 197, 94, 0.8); }
+            100% { box-shadow: 0 0 0 2px #08101b, 0 0 0 4px var(--green), 0 0 8px rgba(34, 197, 94, 0.5); }
+        }
+
+        @keyframes redPulse {
+            0%   { box-shadow: 0 0 0 2px #08101b, 0 0 0 4px var(--red), 0 0 8px rgba(239, 68, 68, 0.5); }
+            50%  { box-shadow: 0 0 0 2px #08101b, 0 0 0 4px var(--red), 0 0 18px rgba(239, 68, 68, 0.8); }
+            100% { box-shadow: 0 0 0 2px #08101b, 0 0 0 4px var(--red), 0 0 8px rgba(239, 68, 68, 0.5); }
+        }
+
+        .op-btn-quick {
+            flex: 1;
+            height: 38px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 12px;
+            letter-spacing: .5px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid transparent;
+            cursor: pointer;
+            background: transparent;
+            outline: none;
+        }
+
+        /* BUY Button Premium States */
+        .op-btn-quick.buy {
+            border: 2px solid rgba(34, 197, 94, 0.3);
+            color: var(--green);
+            background: rgba(34, 197, 94, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .op-btn-quick.buy:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.15);
+            border-color: var(--green);
+        }
+
+        .op-btn-quick.buy.active {
+            background: var(--green);
+            color: #08101b;
+            border-color: #2edb6d;
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.6), inset 0 0 8px rgba(255,255,255,0.3);
+            animation: greenPulse 1.5s infinite;
+        }
+
+        .op-btn-quick.buy.dimmed {
+            opacity: 0.4;
+            filter: grayscale(0.5);
+        }
+
+        /* SELL Button Premium States */
+        .op-btn-quick.sell {
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .op-btn-quick.sell:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.15);
+            border-color: var(--red);
+        }
+
+        .op-btn-quick.sell.active {
+            background: var(--red);
+            color: #fff;
+            border-color: #ff5a5a;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.6), inset 0 0 8px rgba(255,255,255,0.3);
+            animation: redPulse 1.5s infinite;
+        }
+
+        .op-btn-quick.sell.dimmed {
+            opacity: 0.4;
+            filter: grayscale(0.5);
+        }
+
+        /* Shared Interactions & Accessibility */
+        .op-btn-quick:active {
+            transform: scale(0.96);
+        }
+
+        .op-btn-quick:focus-visible {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+
+        .op-btn-quick.buy:focus-visible {
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.5);
+        }
+
+        .op-btn-quick.sell:focus-visible {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5);
+        }
+
+        .op-input {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+        }
+
+        .op-confirm {
+            margin-top: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .op-confirm.buy:hover {
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .op-confirm.sell:hover {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .op-confirm:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .op-sect-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+
+        /* ── Bottom panel: margin + card ── */
+        #bottomPanel {
+            margin: 0 24px 16px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
+        }
+
+        .bp-tabs {
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bp-tab {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .4px;
+            padding: 10px 14px;
+        }
+
+        .bp-tab.active {
+            color: var(--green);
+            border-bottom: 2px solid var(--green);
+        }
+
+        .bp-body {
+            padding: 10px 16px;
+        }
+
+        .bp-table th {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+            padding: 6px 8px;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bp-table td {
+            font-size: 12px;
+            padding: 7px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+        }
+
+        .bp-empty {
+            padding: 28px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        /* ── Typography scale matching dashboard ── */
+        .tb-logo {
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -.3px;
+        }
+
+        .tb-price {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: var(--mono);
+            color: #fff;
+            text-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+            letter-spacing: -0.5px;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .tb-price.tick-up {
+            color: var(--green);
+            text-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+            transform: scale(1.05);
+        }
+
+        .tb-price.tick-dn {
+            color: var(--red);
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+            transform: scale(1.05);
+        }
+
+        .tb-chg {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tf-btn {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .tf-btn.active {
+            color: var(--green);
+            background: var(--green-dim);
+        }
+
+        /* .snav-link {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 10px 0;
+            letter-spacing: .6px;
+        } */
+
+        /* ── Order type toggle uniform ── */
+        .order-type-toggle {
+            display: flex;
+            gap: 6px;
+        }
+
+        .ot-btn {
+            flex: 1;
+            padding: 7px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 7px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .ot-btn.active {
+            background: var(--green-dim);
+            color: var(--green);
+            border-color: var(--border-g);
+        }
+
+        /* ── Summary rows ── */
+        .order-summary {
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .sum-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sum-k {
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: .4px;
+            text-transform: uppercase;
+        }
+
+        .sum-v {
+            font-size: 12px;
+            font-weight: 700;
+            font-family: var(--mono);
+        }
+
+        .sum-v.up {
+            color: var(--green);
+        }
+
+        .sum-v.dn {
+            color: var(--red);
+        }
+
+        /* ── Hover transitions on cards ── */
+        #chartWrap,
+        #orderPanel,
+        #toolbar,
+        #bottomPanel {
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        /* ── NEW HEADER STYLES ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(34,197,94,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,197,94,.018) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2d3748;border-radius:2px}
+/* ─── HEADER ─── */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    background: #0d1420;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Bookmark button */
+.hbtn-bookmark {
+    color: var(--muted);
+}
+
+.hbtn-bookmark.bookmarked {
+    color: var(--green) !important;
+}
+
+.hbtn-bookmark.bookmarked svg {
+    fill: var(--green);
+    stroke: var(--green);
+}
+
+/* Pipe separator between button groups */
+.hbtn-sep {
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Settings button */
+.hbtn-settings {
+    color: var(--muted);
+    transition: color .15s, transform .2s;
+}
+
+.hbtn-settings:hover {
+    color: var(--text);
+}
+
+.hbtn-settings:hover svg {
+    animation: spinOnce .5s ease;
+}
+
+@keyframes spinOnce {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(90deg);
+    }
+}
+
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.search-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: var(--text);
+    min-width: 120px;
+    cursor: pointer;
+}
+
+.search-val {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.search-label {
+    font-size: 11px;
+    letter-spacing: .5px;
+}
+
+.hbtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all .15s;
+    white-space: nowrap;
+    font-family: var(--sans);
+}
+
+.hbtn:hover {
+    background: rgba(255, 255, 255, .06);
+    color: #fff;
+}
+
+.hbtn-star {
+    color: var(--yellow);
+}
+
+.hbtn.icon-only {
+    padding: 5px 7px;
+}
+
+/* ─── SUBNAV ─── */
+.subnav {
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+    background: #060000;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.snav-link {
+    display: block;
+    padding: 10px 16px 10px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    letter-spacing: .5px;
+    transition: all .15s;
+    margin-right: 16px;
+}
+
+.snav-link.active {
+    color: var(--text);
+    border-bottom-color: var(--green);
+}
+
+/* Misc inherited header styles from app */
+kbd {
+    background: rgba(255,255,255,.1);
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-family: var(--mono);
+    color: #fff;
+}
+.market-status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.2);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    font-family: var(--mono);
+    letter-spacing: .5px;
+}
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+.user-avatar-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 8px 2px 2px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.user-avatar-pill:hover {
+    background: rgba(255,255,255,.06);
+}
+.user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    background: var(--green);
+    color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+.user-avatar-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+}
+.notif-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 10px;
+    margin-left: 2px;
+}
+.kbd-help { display: flex; align-items: center; font-size: 10px; color: var(--muted); }
+/* ── END HEADER STYLES ── */
+/* ════════════════════════════════════════════════════
+           HIERARCHY UNIFICATION v2 — Analysis ≡ Dashboard Mode
+        ════════════════════════════════════════════════════ */
+
+        /* ── 1. Topbar: demote to slim secondary toolbar ── */
+        #topbar {
+            height: 40px;
+            padding: 0 20px;
+            gap: 8px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            box-shadow: none;
+        }
+
+        .btn-buy,
+        .btn-sell {
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            padding: 4px 12px !important;
+            border-radius: 6px !important;
+            letter-spacing: .4px;
+        }
+
+        .tb-logo {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: -.2px;
+        }
+
+        .tb-price {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .tb-chg {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tb-btn,
+        .tb-asset-sel {
+            font-size: 11px;
+        }
+
+        .tf-btn {
+            font-size: 10px;
+            padding: 3px 8px;
+        }
+
+        /* ── 2. Subnav: increase weight to anchor hierarchy ── */
+        .subnav-trading { height: 40px; } /* disabled old subnav */
+.subnav-old { height: 32px;
+            padding: 0 20px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* .snav-link {
+            font-size: 10px;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        } */
+
+        /* ── 3. App grid: tighten row heights to match new topbar ── */
+        #app {
+            grid-template-rows: 48px 40px 40px 1fr 130px;
+        }
+
+        /* ── 4. Mid-row: max-width container + 24px rhythm ── */
+        #midrow {
+            max-width: 1560px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 14px 20px;
+            gap: 14px;
+            box-sizing: border-box;
+        }
+
+        /* ── 5. Chart wrap: proper rounded-2xl card ── */
+        #chartWrap {
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow:
+                0 2px 12px rgba(0, 0, 0, .28),
+                0 1px 0 rgba(255, 255, 255, .03) inset;
+        }
+
+        /* ── 6. Drawing toolbar: slim pill card ── */
+        #toolbar {
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 6px 0;
+            background: var(--bg-card);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .22);
+            width: 36px;
+            flex-shrink: 0;
+        }
+
+        .tool-btn {
+            width: 28px;
+            height: 28px;
+            font-size: 13px;
+            border-radius: 6px;
+            color: var(--muted);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .tool-btn:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.1);
+        }
+
+        .tool-btn.active {
+            color: var(--green);
+            background: rgba(34, 197, 94, 0.1);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+        }
+
+        .tool-tooltip {
+            position: absolute;
+            left: 45px;
+            top: 50%;
+            transform: translateY(-50%) translateX(-5px);
+            background: #1e293b;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.2s;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .tool-btn:hover .tool-tooltip {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        /* ── 7. Order panel: elevated card ── */
+        #orderPanel {
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            gap: 12px;
+            box-shadow:
+                0 2px 12px rgba(0, 0, 0, .28),
+                0 1px 0 rgba(255, 255, 255, .03) inset;
+            min-width: 200px;
+            max-width: 220px;
+        }
+
+        .op-title {
+            font-size: 10px;
+            letter-spacing: .8px;
+        }
+
+        .op-confirm {
+            font-size: 11px;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        /* ── 8. Bottom panel: reduced vertical footprint ── */
+        #bottomPanel {
+            margin: 0 20px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .2);
+            overflow: hidden;
+        }
+
+        .bp-tabs {
+            padding: 0 14px;
+            height: 32px;
+            min-height: 32px;
+        }
+
+        .bp-tab {
+            font-size: 10px;
+            padding: 0 12px;
+            height: 32px;
+            line-height: 32px;
+        }
+
+        .bp-body {
+            padding: 6px 14px;
+            overflow-y: auto;
+        }
+
+        .bp-table th {
+            padding: 5px 8px;
+            font-size: 9px;
+        }
+
+        .bp-table td {
+            padding: 5px 8px;
+            font-size: 11px;
+        }
+
+        /* Status Badges */
+        .badge-pending { background: rgba(249,115,22,0.1); color: #f97316; border: 1px solid rgba(249,115,22,0.2); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
+        .badge-active { background: rgba(34,197,94,0.1); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
+        .badge-filled { background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
+        .badge-ai { background: rgba(139,92,246,0.1); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.2); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; }
+
+        /* P&L Cards */
+        .pnl-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            transition: all 0.2s;
+        }
+
+        .pnl-card:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.04); }
+        .pnl-lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .pnl-val { font-size: 18px; font-weight: 800; font-family: var(--mono); }
+        .pnl-val.up { color: var(--green); }
+        .pnl-val.dn { color: var(--red); }
+        .pnl-sub { font-size: 9px; color: var(--muted); margin-top: 4px; }
+
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-animation {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* ── 9. Page-entry transition: opacity + subtle scale ── */
+        @keyframes analysisEnter {
+            from {
+                opacity: 0;
+                transform: scale(.985);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        #app {
+            animation: analysisEnter 200ms ease both;
+        }
+
+        /* ── AI Signal Panel (Premium) ── */
+        .ai-signal-card {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 100;
+            width: 220px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: none;
+            overflow: hidden;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .ais-header {
+            padding: 10px 12px;
+            background: rgba(139, 92, 246, 0.1);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ais-status {
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #a78bfa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot.pulsing {
+            width: 6px;
+            height: 6px;
+            background: #a78bfa;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #a78bfa;
+            animation: ais-pulse 2s infinite;
+        }
+
+        @keyframes ais-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .ais-close {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .ais-body {
+            padding: 14px;
+        }
+
+        .ais-signal-row {
+            margin-bottom: 12px;
+        }
+
+        .ais-label {
+            font-size: 9px;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .ais-val {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .ais-val.buy { color: var(--green); text-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+        .ais-val.sell { color: var(--red); text-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+
+        .ais-meter {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            margin-bottom: 6px;
+            overflow: hidden;
+        }
+
+        .ais-meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #a78bfa, #8b5cf6);
+            box-shadow: 0 0 8px #8b5cf6;
+            transition: width 1s ease-out;
+        }
+
+        .ais-confidence {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .ais-reasoning {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            margin-bottom: 12px;
+        }
+
+        .ais-reason-title {
+            font-size: 9px;
+            font-weight: 700;
+            color: #a78bfa;
+            margin-bottom: 4px;
+        }
+
+        .ais-reasoning p {
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-dim);
+            margin: 0;
+        }
+
+        .ais-more-btn {
+            width: 100%;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ais-more-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            color: #fff;
+        }
+        .tool-btn[data-tool="eraser"].active {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+        }
+    </style>
+
+    <!-- React & Tailwind for Dropdown -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@11.0.8/dist/framer-motion.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="header">
+    <div class="header-left">
+        <a href="index.html" class="logo" style="text-decoration:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                <polyline points="16 7 22 7 22 13" />
+            </svg>
+            <span class="logo-text">SentiMarket</span>
+        </a>
+        <!-- Live Market Status -->
+        <div class="market-status-pill" data-tip="Real-time market data active">
+            <span class="status-dot"></span>
+            LIVE &bull; MARKET OPEN
+        </div>
+        <!-- Search Pill -->
+        <div class="search-pill" style="cursor:pointer" onclick="openSearch()">
+            <span class="search-label" style="display:flex;align-items:center;gap:4px">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                SEARCH ASSET:
+            </span>
+            <div class="search-box" id="searchBoxDisplay">
+                <span class="search-val" id="searchBoxLabel">Dogecoin</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+            </div>
+            <span class="search-shortcut" style="margin-left:4px"><kbd>K</kbd></span>
+        </div>
+    </div>
+    <div class="header-right">
+        <!-- Alerts with badge -->
+        <button class="hbtn" data-tip="Price &amp; sentiment alerts">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            Alerts
+            <span class="notif-badge">3</span>
+        </button>
+        <button class="hbtn hbtn-star" data-tip="Your tracked assets">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            Portfolio
+        </button>
+        <div class="hbtn-sep"></div>
+        <!-- User avatar -->
+        <div id="trader-dropdown-root" class="relative"></div>
+        <button class="hbtn hbtn-settings" id="settingsBtn" title="Settings" data-tip="Preferences">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+        </button>
+        <button class="hbtn hbtn-bookmark" data-tip="Bookmark this asset">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+        </button>
+    </div>
+</header>
+
+<nav class="subnav">
+    <a class="snav-link" href="index.html">DASHBOARD</a>
+    <a class="snav-link active" href="analysis.html">ANALYSIS</a>
+    <a class="snav-link" href="broker-insights-react.html">BROKER INSIGHTS</a>
+    <a class="snav-link" href="#">ALERTS <span class="notif-badge" style="font-size:7px;margin-left:2px">3</span></a>
+    <a class="snav-link" href="#" style="display:inline-flex;align-items:center;gap:4px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M12 8h.01M11 12h1v4h1" /></svg>
+        USER GUIDE
+    </a>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);padding:0 8px" class="kbd-help">
+        <kbd>K</kbd> Search &nbsp;&nbsp;
+        <kbd>B</kbd> Bookmark &nbsp;&nbsp;
+        <kbd>Esc</kbd> Close
+    </span>
+</nav>
+
+        <!-- ════════════════════ TRADING ACTION BAR ════════════════════ -->
+        <div id="actionbar">
+            <button class="btn-buy" onclick="quickAction('BUY')">▲ BUY</button>
+            <button class="btn-sell" onclick="quickAction('SELL')">▼ SELL</button>
+            <div class="tb-divider"></div>
+            <select class="tb-asset-sel" id="assetSel" onchange="switchAsset(this.value)">
+                <option value="DOGE">DOGE/USD</option>
+                <option value="BTC">BTC/USD</option>
+                <option value="ETH">ETH/USD</option>
+                <option value="SOL">SOL/USD</option>
+                <option value="PEPE">PEPE/USD</option>
+                <option value="AVAX">AVAX/USD</option>
+            </select>
+            <div class="tb-price" id="tbPrice">$0.1842</div>
+            <div class="tb-chg up" id="tbChg">▲ +5.32%</div>
+            <div class="tb-divider"></div>
+            <div class="tf-group" id="tfGroup">
+                <button class="tf-btn" onclick="setTf(this,'1D')">1D</button>
+                <button class="tf-btn active" onclick="setTf(this,'5D')">5D</button>
+                <button class="tf-btn" onclick="setTf(this,'1M')">1M</button>
+                <button class="tf-btn" onclick="setTf(this,'3M')">3M</button>
+                <button class="tf-btn" onclick="setTf(this,'6M')">6M</button>
+                <button class="tf-btn" onclick="setTf(this,'1Y')">1Y</button>
+                <button class="tf-btn" onclick="setTf(this,'5Y')">5Y</button>
+            </div>
+            <div class="tb-divider"></div>
+            <button class="tb-btn" id="indBtn" onclick="toggleIndicators()">⊕ Indicators</button>
+            <button class="tb-btn" id="magBtn" onclick="toggleMagnetic()">🧲 Snap</button>
+            <button class="tb-btn" id="aiBtn" onclick="toggleAIPanel()"
+                style="border-color:rgba(139,92,246,.3);color:#8b5cf6">🤖 AI Engine</button>
+            <div class="tb-spacer"></div>
+            <div class="market-status-pill live-only" style="background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.1);padding:2px 8px;gap:4px;">
+                <span class="status-dot" style="width:5px;height:5px;"></span>
+                <span style="font-size:9px;font-weight:700;letter-spacing:1px;">LIVE</span>
+            </div>
+        </div>
+
+        
+
+        <!-- ════════════════════ MIDDLE ROW ════════════════════ -->
+        <div id="midrow">
+
+            <!-- Drawing Toolbar -->
+            <div id="toolbar">
+                <button class="tool-btn active" data-tool="crosshair" onclick="setTool(this,'crosshair')"
+                    title="Crosshair">
+                    ✛<span class="tool-tooltip">Crosshair</span>
+                </button>
+                <button class="tool-btn" data-tool="trendline" onclick="setTool(this,'trendline')" title="Trend Line">
+                    ╱<span class="tool-tooltip">Trend Line</span>
+                </button>
+                <button class="tool-btn" data-tool="hline" onclick="setTool(this,'hline')" title="Horizontal Line">
+                    ─<span class="tool-tooltip">H-Line</span>
+                </button>
+                <div class="tool-sep"></div>
+                <button class="tool-btn" data-tool="rect" onclick="setTool(this,'rect')" title="Rectangle">
+                    ▭<span class="tool-tooltip">Rectangle</span>
+                </button>
+                <button class="tool-btn" data-tool="fib" onclick="setTool(this,'fib')" title="Fibonacci">
+                    🌀<span class="tool-tooltip">Fibonacci</span>
+                </button>
+                <div class="tool-sep"></div>
+                <button class="tool-btn" data-tool="brush" onclick="setTool(this,'brush')" title="Brush">
+                    ✏<span class="tool-tooltip">Brush</span>
+                </button>
+                <button class="tool-btn" data-tool="text" onclick="setTool(this,'text')" title="Text">
+                    T<span class="tool-tooltip">Text Label</span>
+                </button>
+                <button class="tool-btn" data-tool="eraser" onclick="setTool(this,'eraser')" title="Eraser (E)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.9-9.9c1-1 2.5-1 3.4 0l6.6 6.6c1 1 1 2.5 0 3.4L13 21" />
+                        <path d="M22 21H7" />
+                        <path d="m5 11 9 9" />
+                    </svg>
+                    <span class="tool-tooltip">Eraser (E)</span>
+                </button>
+                <div class="tool-sep"></div>
+                <button class="tool-btn" data-tool="zoom" onclick="setTool(this,'zoom')" title="Zoom">
+                    🔍<span class="tool-tooltip">Zoom</span>
+                </button>
+                <div class="tool-sep"></div>
+                <button class="tool-btn" id="lockBtn" onclick="toggleLock()" title="Lock Drawings">
+                    🔓<span class="tool-tooltip">Lock</span>
+                </button>
+                <button class="tool-btn" onclick="clearDrawings()" title="Clear All">
+                    🗑<span class="tool-tooltip">Clear All</span>
+                </button>
+            </div>
+
+            <!-- Chart Area -->
+            <div id="chartWrap">
+                <!-- Indicator Panel -->
+                <div id="indicatorPanel">
+                    <div class="ind-title">Indicators</div>
+                    <div class="ind-row"><span class="ind-lbl">EMA 20</span><button class="toggle-sw on" id="sw-ema20"
+                            onclick="toggleInd(this,'ema20')"></button></div>
+                    <div class="ind-row"><span class="ind-lbl">EMA 50</span><button class="toggle-sw on" id="sw-ema50"
+                            onclick="toggleInd(this,'ema50')"></button></div>
+                    <div class="ind-row"><span class="ind-lbl">Volume</span><button class="toggle-sw on" id="sw-vol"
+                            onclick="toggleInd(this,'vol')"></button></div>
+                    <div class="ind-row"><span class="ind-lbl">Bollinger</span><button class="toggle-sw" id="sw-bb"
+                            onclick="toggleInd(this,'bb')"></button></div>
+                    <div class="ind-row"><span class="ind-lbl">RSI</span><button class="toggle-sw" id="sw-rsi"
+                            onclick="toggleInd(this,'rsi')"></button></div>
+                </div>
+                <!-- AI Strategy Panel -->
+                <div id="aiPanel" class="ai-signal-card">
+                    <div class="ais-header">
+                        <div class="ais-status">
+                            <span class="status-dot pulsing"></span>
+                            AI ENGINE 2.0 ACTIVE
+                        </div>
+                        <button class="ais-close" onclick="toggleAIPanel()">×</button>
+                    </div>
+                    <div class="ais-body">
+                        <div class="ais-signal-row">
+                            <span class="ais-label">CURRENT SIGNAL:</span>
+                            <span id="aiSignalVal" class="ais-val buy">STRONG BUY</span>
+                        </div>
+                        <div class="ais-meter">
+                            <div class="ais-meter-fill" style="width:78%"></div>
+                        </div>
+                        <div class="ais-confidence">
+                            CONFIDENCE: <span id="aiConfVal">78.4%</span>
+                        </div>
+                        <div class="ais-reasoning">
+                            <div class="ais-reason-title">AI LOGIC:</div>
+                            <p id="aiReasonText">Double Bottom pattern detected on 1H timeframe + RSI oversold recovery. Hype Score trending up (+12% last hour).</p>
+                        </div>
+                        <button class="ais-more-btn">Explain More →</button>
+                    </div>
+                <!-- Legacy AI Settings (Hidden by default or replaced) -->
+                <div id="aiSettings" style="display:none;font-weight:700;color:#8b5cf6;margin-bottom:10px;font-size:12px;display:none;justify-content:space-between;align-items:center">
+                        🤖 AI Strategy Engine <span id="aiStatusDot"
+                            style="width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block"></span>
+                    </div>
+                    <div class="ind-row">
+                        <span class="ind-lbl">Strategy</span>
+                        <select class="tb-asset-sel" onchange="setAIStrategy(this.value)"
+                            style="font-size:10px;padding:2px 4px">
+                            <option value="ema_cross">EMA Crossover</option>
+                            <option value="rsi_os">RSI OB/OS</option>
+                            <option value="sentiment_spike">Sentiment Spike</option>
+                            <option value="hype_breakout">Hype Breakout</option>
+                        </select>
+                    </div>
+                    <div class="ind-row">
+                        <span class="ind-lbl">Risk Level</span>
+                        <select class="tb-asset-sel" onchange="setAIRisk(this.value)"
+                            style="font-size:10px;padding:2px 4px">
+                            <option value="low">Low (50 units)</option>
+                            <option value="medium" selected>Medium (150)</option>
+                            <option value="high">High (400)</option>
+                        </select>
+                    </div>
+                    <div class="ind-row">
+                        <span class="ind-lbl">Max Daily</span>
+                        <input type="number" class="op-input" value="5" min="1" max="50"
+                            oninput="setAIMaxTrades(this.value)" style="width:55px;padding:3px 6px;font-size:11px">
+                    </div>
+                    <div style="margin-top:10px;display:flex;gap:6px">
+                        <button id="aiToggleBtn" class="btn-buy op-confirm" onclick="toggleAI()"
+                            style="flex:1;padding:7px;font-size:11px;margin-top:0;border-radius:6px">▶ Start AI</button>
+                    </div>
+                    <div style="margin-top:8px;font-size:9px;color:var(--muted);line-height:1.5">Paper orders only. AI
+                        evaluates CoinDesk-backed price ticks.</div>
+                </div>
+                <!-- Crosshair info -->
+                <div id="crosshairInfo"></div>
+                <!-- Price tag -->
+                <div id="priceTag">$0.1842</div>
+                <!-- LW Chart -->
+                <div id="chartContainer">
+                    <div id="lwChart"></div>
+                    <canvas id="drawCanvas"></canvas>
+                </div>
+                <!-- Volume -->
+                <div id="volumeContainer">
+                    <div id="lwVolume"></div>
+                </div>
+            </div>
+
+            <!-- Order Panel -->
+            <div id="orderPanel">
+                <div class="op-title">Place Order</div>
+                <div class="op-balance">
+                    <div>
+                        <div class="op-bal-lbl">Available</div>
+                        <div class="op-bal-val" id="opBalance">$10,000.00</div>
+                    </div>
+                    <div class="op-bal-actions">
+                        <button class="op-btn-quick buy active" id="opQuickBuy" onclick="setOrderSide('buy')">Buy</button>
+                        <button class="op-btn-quick sell" id="opQuickSell" onclick="setOrderSide('sell')">Sell</button>
+                    </div>
+                </div>
+                <div class="op-toggle" style="display:none">
+                    <button class="op-tog-btn buy active" id="opBuyBtn" onclick="setOrderSide('buy')">BUY</button>
+                    <button class="op-tog-btn sell" id="opSellBtn" onclick="setOrderSide('sell')">SELL</button>
+                </div>
+                <div>
+                    <div class="op-sect-label">Order Type</div>
+                    <div class="order-type-toggle">
+                        <button class="ot-btn active" id="otMarket" onclick="setOrderType('market')">Market</button>
+                        <button class="ot-btn" id="otLimit" onclick="setOrderType('limit')">Limit</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="op-sect-label">Quantity</div>
+                    <input class="op-input" type="number" id="opQty" value="100" min="1" oninput="updateSummary()">
+                </div>
+                <div id="limitPriceWrap" style="display:none">
+                    <div class="op-sect-label">Limit Price ($)</div>
+                    <input class="op-input" type="number" id="opLimitPrice" value="0.18" step="0.0001"
+                        oninput="updateSummary()">
+                </div>
+                <div>
+                    <div class="op-sect-label">Stop Loss ($)</div>
+                    <input class="op-input" type="number" id="opSL" placeholder="Optional" step="0.0001">
+                </div>
+                <div>
+                    <div class="op-sect-label">Take Profit ($)</div>
+                    <input class="op-input" type="number" id="opTP" placeholder="Optional" step="0.0001">
+                </div>
+                <div class="op-summary" id="opSummary">
+                    <div class="sum-row"><span class="sum-k">Asset</span><span class="sum-v"
+                            id="sumAsset">DOGE/USD</span></div>
+                    <div class="sum-row"><span class="sum-k">Qty</span><span class="sum-v" id="sumQty">100</span></div>
+                    <div class="sum-row"><span class="sum-k">Price</span><span class="sum-v"
+                            id="sumPrice">$0.1842</span></div>
+                    <div class="sum-row"><span class="sum-k">Total</span><span class="sum-v up"
+                            id="sumTotal">$18.42</span></div>
+                </div>
+                <div class="op-risk">⚠ Risk: High Hype Asset — confirm before executing</div>
+                <button class="op-confirm buy" id="opConfirm" onclick="placeOrder()">CONFIRM BUY</button>
+            </div>
+
+        </div><!-- /midrow -->
+
+        <!-- ════════════════════ BOTTOM PANEL ════════════════════ -->
+        <div id="bottomPanel">
+            <div class="bp-tabs">
+                <button class="bp-tab active" onclick="setTab(this,'orders')">Open Orders <span id="ordCount"
+                        style="background:var(--green-dim);color:var(--green);border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px">0</span></button>
+                <button class="bp-tab" onclick="setTab(this,'positions')">Positions <span id="posCount"
+                        style="background:var(--green-dim);color:var(--green);border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px">0</span></button>
+                <button class="bp-tab" onclick="setTab(this,'history')">Order History</button>
+                <button class="bp-tab" onclick="setTab(this,'pnl')">P&amp;L Summary</button>
+                <button class="bp-tab" onclick="setTab(this,'ai_log')" style="color:rgba(139,92,246,.8)">🤖 AI
+                    Log</button>
+                <div style="flex:1"></div>
+                <span style="padding:8px 12px;font-size:11px;color:var(--dim)">Net P&amp;L: <span id="netPnl"
+                        style="color:var(--green);font-family:var(--mono);font-weight:700">+$0.00</span></span>
+            </div>
+            <div class="bp-body" id="bpBody"></div>
+        </div>
+
+    </div><!-- /app -->
+
+    <!-- Toast -->
+    <div id="toast"></div>
+    <!-- AI Popup -->
+    <div id="aiPopup"
+        style="display:none;position:fixed;bottom:200px;left:16px;z-index:998;background:var(--bg-card);border:1px solid rgba(139,92,246,.4);border-radius:8px;padding:10px 14px;font-size:12px;box-shadow:0 8px 30px rgba(0,0,0,.5);min-width:200px">
+        <div style="color:#8b5cf6;font-weight:700;font-size:11px;margin-bottom:5px">🤖 AI Trade Executed</div>
+        <div class="sum-row"><span class="sum-k">Action</span><span id="aiPopupSide" class="sum-v up">BUY</span></div>
+        <div class="sum-row"><span class="sum-k">Order</span><span id="aiPopupAsset" class="sum-v"
+                style="font-size:11px">100 DOGE</span></div>
+        <div class="sum-row"><span class="sum-k">Strategy</span><span id="aiPopupStrat" class="sum-v"
+                style="color:#8b5cf6;font-size:10px">ema cross</span></div>
+    </div>
+    <!-- Text input overlay -->
+    <input id="textInput"
+        style="display:none;position:fixed;z-index:999;background:#1e2d42;border:1px solid var(--border-g);color:var(--text);padding:4px 8px;border-radius:4px;outline:none;font-size:12px"
+        placeholder="Type label…">
+
+    <script>
+        /* Page-exit fade transition */
+        document.addEventListener('click', function (e) {
+            const a = e.target.closest('a[href]');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href === '#' || href.startsWith('javascript')) return;
+            if (a.target === '_blank') return;
+            e.preventDefault();
+            document.body.classList.add('page-exit');
+            setTimeout(() => { window.location.href = href; }, 220);
+        });
+    </script>
+    <script src="twelve-data.js"></script>
+    <script src="coindesk-data.js"></script>
+    <script src="analysis.js"></script>
+    <script src="app.js"></script>
+    <script src="cursor.js"></script>
+    <script src="settings.js"></script>
+
+    <script type="text/babel" data-type="module">
+        
+// --- TRADER DROPDOWN INJECTION ---
+(() => {
+  const { useState, useEffect, useRef } = React;
+  const { motion, AnimatePresence } = window.Motion;
+
+
+
+// Inline SVG icon components — no CDN dependency
+const LayoutDashboard = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+  </svg>
+);
+const Briefcase = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect x="2" y="7" width="20" height="14" rx="2"/>
+    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+  </svg>
+);
+const Star = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+);
+const UserPlus = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+  </svg>
+);
+const Bell = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+const Zap = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>
+);
+const Settings = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+);
+const LogOut = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+
+function DropdownItem({ icon: Icon, label, onClick, highlight }) {
+  const iconColor = highlight ? '#22c55e' : '#94a3b8';
+  return (
+    <motion.button
+      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className="w-full flex items-center gap-[18px] px-5 py-[13px] transition-colors"
+      style={{ color: '#e2e8f0' }}
+    >
+      <Icon size={20} style={{ color: iconColor, flexShrink: 0 }} />
+      <span className="text-[15px] font-medium tracking-wide">{label}</span>
+    </motion.button>
+  );
+}
+
+function TraderDropdown() {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const IconDashboard = LayoutDashboard;
+  const IconPortfolio = Briefcase;
+  const IconWatchlist = Star;
+  const IconBrokers   = UserPlus;
+  const IconAlerts    = Bell;
+  const IconSignals   = Zap;
+  const IconSettings  = Settings;
+  const IconLogout    = LogOut;
+
+  return (
+    <div className="relative z-[9999]" ref={dropdownRef}>
+      
+      {/* Target Trigger Button */}
+      <motion.button 
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className="user-avatar-pill"
+      >
+        <div className="user-avatar-circle">T</div>
+        <span className="user-avatar-name">Trader</span>
+      </motion.button>
+
+      {/* Dropdown Panel */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -5, scale: 0.95 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+            className="absolute right-0 top-11 w-[240px] bg-[#0f172a] border border-[#1e293b] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden z-[9999]"
+            style={{ transformOrigin: "top right" }}
+          >
+            {/* Header: User Summary */}
+            <div className="px-5 py-[14px] flex items-center gap-3">
+              <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center font-bold text-[18px] text-[#022c22] shadow-[0_0_8px_rgba(34,197,94,0.3)] bg-[#22c55e]">
+                T
+              </div>
+              <h3 className="text-slate-200 font-semibold text-[16px] tracking-wide">Trader</h3>
+            </div>
+            
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconDashboard} label="Dashboard" onClick={() => window.location.href='index.html'} />
+              <DropdownItem icon={IconPortfolio} label="Portfolio" onClick={() => {}} />
+              <DropdownItem icon={IconWatchlist} label="Watchlist" onClick={() => {}} />
+              <DropdownItem icon={IconBrokers} label="Followed Brokers" onClick={() => window.location.href='broker-insights-react.html'} />
+              <DropdownItem icon={IconAlerts} label="Alerts" onClick={() => {}} />
+              <DropdownItem icon={IconSignals} label="AI Signals" highlight onClick={() => {}} />
+            </div>
+
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconSettings} label="Settings" onClick={() => {}} />
+            </div>
+
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconLogout} label="Logout" onClick={() => {}} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+
+  // Ensure the DOM is ready for React to mount the dropdown
+  setTimeout(() => {
+    const rootEl = document.getElementById('trader-dropdown-root');
+    if (rootEl) {
+      const root = ReactDOM.createRoot(rootEl);
+      root.render(<TraderDropdown />);
+    }
+  }, 100);
+
+})();
+
+    </script>
+</body>
+
+</html>

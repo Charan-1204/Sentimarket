@@ -1,0 +1,2769 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentiMarket — Decode Market Hype. Trade with Intelligence.</title>
+    <meta name="description"
+        content="AI-powered crypto sentiment trading platform. Real-time hype scoring, signal generation, and intelligent trade confirmation.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #050c18;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        /* ── Design tokens ── */
+        :root {
+            --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, .12);
+            --green-glow: rgba(34, 197, 94, .25);
+            --bg: #050c18;
+            --bg-card: #0d1626;
+            --bg-card2: #111f35;
+            --border: rgba(255, 255, 255, .08);
+            --border-g: rgba(34, 197, 94, .2);
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+            --muted: #475569;
+            --orange: #f97316;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --radius: 12px;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        /* ── Utility ── */
+        .container {
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .green {
+            color: var(--green);
+        }
+
+        .muted {
+            color: var(--text-dim);
+        }
+
+        .mono {
+            font-family: var(--mono);
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+            color: var(--green);
+            background: var(--green-dim);
+            border: 1px solid var(--border-g);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        /* ── Scroll reveal ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity .6s ease, transform .6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: .1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: .2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: .3s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: .4s;
+        }
+
+        /* ═══════════════════════════════════════════
+   1. STICKY NAVBAR
+═══════════════════════════════════════════ */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            height: 64px;
+            border-bottom: 1px solid transparent;
+            background: rgba(5, 12, 24, .7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: border-color .3s, background .3s;
+        }
+
+        .navbar.scrolled {
+            border-bottom-color: var(--border);
+            background: rgba(5, 12, 24, .92);
+        }
+
+        .navbar-inner {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -.3px;
+            color: var(--text);
+        }
+
+        .nav-logo-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+        }
+
+        .nav-logo span {
+            color: var(--green);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dim);
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+            transition: color .2s;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-ghost {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dim);
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: rgba(255, 255, 255, .2);
+            background: rgba(255, 255, 255, .04);
+        }
+
+        .btn-primary {
+            font-size: 14px;
+            font-weight: 700;
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 8px;
+            background: var(--green);
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            background: #16a34a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(34, 197, 94, .35);
+        }
+
+        /* ═══════════════════════════════════════════
+   2. HERO
+═══════════════════════════════════════════ */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background grid */
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(34, 197, 94, .03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 197, 94, .03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+        }
+
+        /* Radial glow behind headline */
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse at center, rgba(34, 197, 94, .08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            margin-bottom: 28px;
+            animation: fadeUp .8s ease both;
+        }
+
+        .hero-headline {
+            font-size: clamp(40px, 6vw, 72px);
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1.05;
+            color: var(--text);
+            max-width: 880px;
+            animation: fadeUp .8s .1s ease both;
+        }
+
+        .hero-headline .hl-green {
+            color: var(--green);
+            text-shadow: 0 0 40px rgba(34, 197, 94, .4);
+        }
+
+        .hero-sub {
+            margin-top: 20px;
+            font-size: 18px;
+            color: var(--text-dim);
+            max-width: 560px;
+            line-height: 1.7;
+            animation: fadeUp .8s .2s ease both;
+        }
+
+        .hero-actions {
+            margin-top: 40px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeUp .8s .3s ease both;
+        }
+
+        .btn-primary-lg {
+            font-size: 15px;
+            font-weight: 700;
+            color: #000;
+            padding: 14px 32px;
+            border-radius: 10px;
+            background: var(--green);
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 0 0 rgba(34, 197, 94, 0);
+        }
+
+        .btn-primary-lg:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(34, 197, 94, .35);
+        }
+
+        .btn-outline-lg {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            padding: 14px 32px;
+            border-radius: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .btn-outline-lg:hover {
+            border-color: rgba(255, 255, 255, .25);
+            background: rgba(255, 255, 255, .04);
+        }
+
+        .hero-stats {
+            margin-top: 60px;
+            display: flex;
+            gap: 48px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeUp .8s .4s ease both;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-num {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .hero-stat-lbl {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+        }
+
+        /* ═══════════════════════════════════════════
+   3. ANIMATED MINI DASHBOARD PREVIEW
+═══════════════════════════════════════════ */
+        .dashboard-preview {
+            padding: 0 24px 100px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dash-frame {
+            width: 100%;
+            max-width: 960px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 40px 120px rgba(0, 0, 0, .6), 0 0 0 1px rgba(34, 197, 94, .06);
+            overflow: hidden;
+        }
+
+        .dash-topbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, .02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dash-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dash-dot-r {
+            background: #ef4444;
+        }
+
+        .dash-dot-y {
+            background: #eab308;
+        }
+
+        .dash-dot-g {
+            background: #22c55e;
+        }
+
+        .dash-url {
+            flex: 1;
+            height: 26px;
+            background: rgba(255, 255, 255, .04);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--mono);
+            max-width: 300px;
+        }
+
+        .dash-content {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .dash-kpi {
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 12px;
+        }
+
+        .dash-kpi-lbl {
+            font-size: 9px;
+            color: var(--muted);
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .dash-kpi-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            font-family: var(--mono);
+        }
+
+        .dash-kpi-ch {
+            font-size: 11px;
+            color: var(--green);
+            margin-top: 2px;
+        }
+
+        .dash-chart-area {
+            grid-column: span 4;
+            height: 140px;
+            background: rgba(255, 255, 255, .02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .dash-chart-area canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* ═══════════════════════════════════════════
+   4. LIVE TICKER
+═══════════════════════════════════════════ */
+        .ticker-section {
+            padding: 0 0 80px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .ticker-section::before,
+        .ticker-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .ticker-section::before {
+            left: 0;
+            background: linear-gradient(90deg, #050c18, transparent);
+        }
+
+        .ticker-section::after {
+            right: 0;
+            background: linear-gradient(-90deg, #050c18, transparent);
+        }
+
+        .ticker-track {
+            display: flex;
+            gap: 0;
+            width: max-content;
+            animation: tickerScroll 28s linear infinite;
+        }
+
+        .ticker-track:hover {
+            animation-play-state: paused;
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            border-left: 1px solid var(--border);
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        .ticker-sym {
+            font-weight: 700;
+            color: var(--text);
+            font-family: var(--mono);
+        }
+
+        .ticker-price {
+            color: var(--text-dim);
+            font-family: var(--mono);
+        }
+
+        .ticker-chg.up {
+            color: var(--green);
+        }
+
+        .ticker-chg.down {
+            color: var(--red);
+        }
+
+        .ticker-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+        .ticker-dot.up {
+            background: var(--green);
+        }
+
+        .ticker-dot.down {
+            background: var(--red);
+        }
+
+        @keyframes tickerScroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+   5. PROBLEM vs SOLUTION
+═══════════════════════════════════════════ */
+        .pvs-section {
+            padding: 100px 0;
+        }
+
+        .pvs-section .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: stretch;
+        }
+
+        .pvs-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px 36px;
+        }
+
+        .pvs-card.solution {
+            border-color: var(--border-g);
+            background: rgba(22, 163, 74, .04);
+        }
+
+        .pvs-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .pvs-card:not(.solution) .pvs-label {
+            color: var(--red);
+        }
+
+        .pvs-card.solution .pvs-label {
+            color: var(--green);
+        }
+
+        .pvs-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 24px;
+            line-height: 1.3;
+        }
+
+        .pvs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .pvs-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        .pvs-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        .pvs-card:not(.solution) .pvs-icon {
+            background: rgba(239, 68, 68, .15);
+            color: var(--red);
+        }
+
+        .pvs-card.solution .pvs-icon {
+            background: rgba(34, 197, 94, .15);
+            color: var(--green);
+        }
+
+        /* ═══════════════════════════════════════════
+   6. FEATURES GRID
+═══════════════════════════════════════════ */
+        .features-section {
+            padding: 100px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-title {
+            font-size: clamp(28px, 4vw, 44px);
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -1px;
+            margin-top: 14px;
+            line-height: 1.15;
+        }
+
+        .section-sub {
+            font-size: 16px;
+            color: var(--text-dim);
+            margin-top: 12px;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .feat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(34, 197, 94, .04), transparent 60%);
+            opacity: 0;
+            transition: opacity .3s;
+            border-radius: inherit;
+        }
+
+        .feat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-g);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .3), 0 0 0 1px rgba(34, 197, 94, .1);
+        }
+
+        .feat-card:hover::after {
+            opacity: 1;
+        }
+
+        .feat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--green-dim);
+            border: 1px solid var(--border-g);
+            display: grid;
+            place-items: center;
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .feat-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .feat-desc {
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* ═══════════════════════════════════════════
+   7. AI SIGNAL FLOW
+═══════════════════════════════════════════ */
+        .flow-section {
+            padding: 100px 0;
+        }
+
+        .flow-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+            margin-top: 56px;
+        }
+
+        .flow-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            text-align: center;
+            width: 140px;
+        }
+
+        .flow-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--bg-card2);
+            border: 2px solid var(--border);
+            display: grid;
+            place-items: center;
+            font-size: 26px;
+            transition: border-color .3s, box-shadow .3s;
+            position: relative;
+        }
+
+        .flow-circle.active {
+            border-color: var(--green);
+            box-shadow: 0 0 0 6px rgba(34, 197, 94, .1), 0 0 24px rgba(34, 197, 94, .2);
+            animation: pulse-ring 2s ease infinite;
+        }
+
+        @keyframes pulse-ring {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 6px rgba(34, 197, 94, .1), 0 0 24px rgba(34, 197, 94, .2);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(34, 197, 94, .05), 0 0 40px rgba(34, 197, 94, .3);
+            }
+        }
+
+        .flow-lbl {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            line-height: 1.3;
+        }
+
+        .flow-arrow {
+            flex-shrink: 0;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--border), var(--border-g), var(--border));
+            position: relative;
+            margin-bottom: 24px;
+            /* align with circles */
+        }
+
+        .flow-arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 5px solid transparent;
+            border-left-color: var(--green);
+        }
+
+        /* Animated data packet */
+        .flow-arrow::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: slidePacket 3s linear infinite;
+        }
+
+        @keyframes slidePacket {
+            0% {
+                left: 0;
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                left: calc(100% - 8px);
+                opacity: 0;
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+   8. DASHBOARD DEMO + BIG CTA
+═══════════════════════════════════════════ */
+        .demo-section {
+            padding: 100px 0;
+            background: linear-gradient(180deg, transparent, rgba(34, 197, 94, .03), transparent);
+        }
+
+        .demo-inner {
+            display: grid;
+            grid-template-columns: 1fr 480px;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .demo-title {
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -1px;
+            line-height: 1.2;
+        }
+
+        .demo-desc {
+            font-size: 15px;
+            color: var(--text-dim);
+            margin-top: 16px;
+            line-height: 1.7;
+        }
+
+        .demo-points {
+            margin-top: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .demo-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+
+        .demo-point-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--green-dim);
+            border: 1px solid var(--border-g);
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+            color: var(--green);
+            font-size: 9px;
+            font-weight: 900;
+        }
+
+        .demo-actions {
+            margin-top: 36px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .demo-visual {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+        }
+
+        .demo-signal {
+            background: rgba(34, 197, 94, .06);
+            border: 1px solid var(--border-g);
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .demo-signal-icon {
+            font-size: 24px;
+        }
+
+        .demo-signal-sym {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text);
+            font-family: var(--mono);
+        }
+
+        .demo-signal-detail {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .demo-signal-conf {
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .demo-signal-pct {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--green);
+            font-family: var(--mono);
+        }
+
+        .demo-signal-lbl {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .demo-mini-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .demo-mini-stat:last-child {
+            border-bottom: none;
+        }
+
+        .demo-mini-k {
+            color: var(--muted);
+        }
+
+        .demo-mini-v {
+            font-weight: 600;
+            color: var(--text);
+            font-family: var(--mono);
+        }
+
+        .demo-mini-v.up {
+            color: var(--green);
+        }
+
+        /* ═══════════════════════════════════════════
+   9. HOW IT WORKS
+═══════════════════════════════════════════ */
+        .hiw-section {
+            padding: 100px 0;
+        }
+
+        .hiw-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-top: 56px;
+            position: relative;
+        }
+
+        .hiw-steps::before {
+            content: '';
+            position: absolute;
+            top: 38px;
+            left: calc(16.66% + 20px);
+            right: calc(16.66% + 20px);
+            height: 1px;
+            background: linear-gradient(90deg, var(--border-g), var(--border-g));
+            z-index: 0;
+        }
+
+        .hiw-step {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hiw-num {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border-g);
+            display: grid;
+            place-items: center;
+            margin: 0 auto 20px;
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--green);
+            position: relative;
+        }
+
+        .hiw-num::after {
+            content: attr(data-n);
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--green);
+            color: #000;
+            font-size: 11px;
+            font-weight: 800;
+            display: grid;
+            place-items: center;
+        }
+
+        .hiw-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .hiw-desc {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* ═══════════════════════════════════════════
+   10. FINAL CTA
+═══════════════════════════════════════════ */
+        .cta-section {
+            padding: 120px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 700px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(34, 197, 94, .07), transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-title {
+            font-size: clamp(32px, 5vw, 60px);
+            font-weight: 900;
+            color: var(--text);
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            position: relative;
+        }
+
+        .cta-title span {
+            color: var(--green);
+        }
+
+        .cta-sub {
+            font-size: 18px;
+            color: var(--text-dim);
+            margin-top: 20px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-actions {
+            margin-top: 40px;
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-note {
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* ═══════════════════════════════════════════
+   11. FOOTER
+═══════════════════════════════════════════ */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 48px 0 32px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 48px;
+        }
+
+        .footer-brand-desc {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-top: 14px;
+            line-height: 1.6;
+            max-width: 240px;
+        }
+
+        .footer-col-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-links a {
+            font-size: 13px;
+            color: var(--muted);
+            transition: color .2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .footer-badges {
+            display: flex;
+            gap: 10px;
+        }
+
+        .footer-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        /* ═══════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════ */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes numberUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .pvs-section .container {
+                grid-template-columns: 1fr;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .demo-inner {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hiw-steps::before {
+                display: none;
+            }
+
+            .hiw-steps {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-stats {
+                gap: 28px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+   3D ENHANCEMENT LAYER — Premium Interactive Effects
+═══════════════════════════════════════════ */
+
+        /* ── Global particle canvas ── */
+        #particleCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+
+        /* ── Hero 3D canvas overlay ── */
+        #heroCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+
+        .hero > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Hero headline glow pulse ── */
+        .hl-green {
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { text-shadow: 0 0 40px rgba(34,197,94,.4), 0 0 80px rgba(34,197,94,.15); }
+            50%       { text-shadow: 0 0 60px rgba(34,197,94,.75), 0 0 120px rgba(34,197,94,.35), 0 0 200px rgba(34,197,94,.1); }
+        }
+
+        /* ── Hero content 3D perspective wrapper ── */
+        .hero-content-3d {
+            display: contents;
+            transform-style: preserve-3d;
+        }
+
+        /* ── Dashboard preview — glassmorphism 3D ── */
+        .dash-frame {
+            background: rgba(13, 22, 38, 0.55) !important;
+            backdrop-filter: blur(24px) saturate(1.4);
+            -webkit-backdrop-filter: blur(24px) saturate(1.4);
+            border: 1px solid rgba(34,197,94,.22) !important;
+            box-shadow:
+                0 40px 120px rgba(0,0,0,.6),
+                0 0 0 1px rgba(34,197,94,.08),
+                0 0 60px rgba(34,197,94,.07),
+                inset 0 1px 0 rgba(255,255,255,.06) !important;
+            transition: transform .6s cubic-bezier(.23,1,.32,1), box-shadow .6s ease;
+            transform-style: preserve-3d;
+            will-change: transform;
+            animation: dashIdle 6s ease-in-out infinite;
+            position: relative;
+            overflow: visible !important;
+        }
+
+        .dash-frame::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(34,197,94,.18) 0%, transparent 45%, rgba(34,197,94,.08) 100%);
+            pointer-events: none;
+            z-index: 0;
+            border-radius: var(--radius);
+        }
+
+        /* Light streak */
+        .dash-frame::after {
+            content: '';
+            position: absolute;
+            top: -40%;
+            left: -30%;
+            width: 60%;
+            height: 200%;
+            background: linear-gradient(105deg, transparent 40%, rgba(34,197,94,.06) 50%, transparent 60%);
+            transform: rotate(-15deg);
+            animation: lightStreak 5s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes lightStreak {
+            0%, 100% { opacity: 0; transform: rotate(-15deg) translateX(-100%); }
+            50%       { opacity: 1; transform: rotate(-15deg) translateX(300%); }
+        }
+
+        @keyframes dashIdle {
+            0%, 100% { transform: perspective(1200px) rotateX(1deg) rotateY(-0.5deg) translateY(0px); }
+            33%       { transform: perspective(1200px) rotateX(-0.5deg) rotateY(1deg) translateY(-4px); }
+            66%       { transform: perspective(1200px) rotateX(0.5deg) rotateY(-1deg) translateY(-2px); }
+        }
+
+        .dash-frame:hover {
+            animation: none;
+            transform: perspective(1000px) rotateX(2.5deg) rotateY(-3.5deg) translateY(-8px) !important;
+            box-shadow:
+                0 60px 140px rgba(0,0,0,.7),
+                0 0 0 1px rgba(34,197,94,.25),
+                0 0 80px rgba(34,197,94,.15),
+                inset 0 1px 0 rgba(255,255,255,.1) !important;
+        }
+
+        /* ── Feature cards — 3D floating ── */
+        .feat-card {
+            transform-style: preserve-3d;
+            will-change: transform;
+            transition: transform .4s cubic-bezier(.23,1,.32,1), border-color .3s, box-shadow .3s !important;
+        }
+
+        .feat-card:hover {
+            transform: perspective(800px) translateZ(20px) rotateX(-3deg) !important;
+            border-color: rgba(34,197,94,.45) !important;
+            box-shadow:
+                0 20px 60px rgba(0,0,0,.4),
+                0 0 0 1px rgba(34,197,94,.2),
+                0 0 40px rgba(34,197,94,.12),
+                0 -4px 20px rgba(34,197,94,.08) !important;
+        }
+
+        /* ── Feature icon enhanced ── */
+        .feat-icon {
+            box-shadow: 0 0 20px rgba(34,197,94,.2), inset 0 1px 0 rgba(255,255,255,.05);
+            transition: box-shadow .3s, transform .3s;
+        }
+
+        .feat-card:hover .feat-icon {
+            box-shadow: 0 0 30px rgba(34,197,94,.45), inset 0 1px 0 rgba(255,255,255,.1);
+            transform: translateZ(8px) scale(1.05);
+        }
+
+        /* ── AI Signal flow — 3D depth pipeline ── */
+        .flow-row {
+            perspective: 1200px;
+        }
+
+        .flow-node:nth-child(1)  { transform: translateZ(0px);   opacity: 0; }
+        .flow-node:nth-child(3)  { transform: translateZ(8px);   opacity: 0; }
+        .flow-node:nth-child(5)  { transform: translateZ(0px);   opacity: 0; }
+        .flow-node:nth-child(7)  { transform: translateZ(8px);   opacity: 0; }
+        .flow-node:nth-child(9)  { transform: translateZ(0px);   opacity: 0; }
+
+        .flow-node.flow-visible {
+            opacity: 1;
+            transition: opacity .6s ease, transform .6s cubic-bezier(.23,1,.32,1);
+        }
+
+        .flow-circle {
+            transition: border-color .3s, box-shadow .3s, transform .3s !important;
+        }
+
+        .flow-circle:hover {
+            transform: scale(1.1) translateZ(8px);
+            border-color: var(--green) !important;
+            box-shadow: 0 0 30px rgba(34,197,94,.4), 0 0 0 8px rgba(34,197,94,.06) !important;
+        }
+
+        /* Pulse wave traveling across flow arrows */
+        @keyframes pulseWave {
+            0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.4); }
+            70%  { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+            100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+
+        .flow-circle.active {
+            animation: pulse-ring 2s ease infinite, pulseWave 2.5s ease-in-out infinite !important;
+        }
+
+        /* ── Live ticker — 3D perspective track ── */
+        .ticker-track {
+            transform-style: preserve-3d;
+        }
+
+        .ticker-item {
+            transition: color .2s, transform .2s;
+        }
+
+        .ticker-item:hover {
+            transform: perspective(400px) translateZ(6px) scale(1.04);
+            color: var(--green);
+        }
+
+        .ticker-item:hover .ticker-sym {
+            color: var(--green);
+            text-shadow: 0 0 12px rgba(34,197,94,.6);
+        }
+
+        /* ── Buttons — 3D press + neon ripple ── */
+        .btn-primary-lg,
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+            transition: all .2s, transform .1s !important;
+        }
+
+        .btn-primary-lg:active,
+        .btn-primary:active {
+            transform: translateY(2px) scale(0.97) !important;
+            box-shadow: 0 2px 8px rgba(34,197,94,.2) !important;
+        }
+
+        .btn-ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: rippleExpand .55s linear;
+            background: radial-gradient(circle, rgba(34,197,94,.5) 0%, rgba(34,197,94,0) 70%);
+            pointer-events: none;
+        }
+
+        @keyframes rippleExpand {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        .btn-outline-lg {
+            position: relative;
+            overflow: hidden;
+            transition: all .25s, transform .1s !important;
+        }
+
+        .btn-outline-lg:active {
+            transform: translateY(2px) scale(0.97) !important;
+        }
+
+        /* ── Holographic scanline overlay ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 3px,
+                rgba(0,0,0,.018) 3px,
+                rgba(0,0,0,.018) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── Ambient corner glows ── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            left: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(34,197,94,.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: ambientShift 12s ease-in-out infinite;
+        }
+
+        @keyframes ambientShift {
+            0%, 100% { transform: translate(0, 0); }
+            33%       { transform: translate(80px, 120px); }
+            66%       { transform: translate(-60px, 60px); }
+        }
+
+        /* ── PvS cards 3D enhancement ── */
+        .pvs-card {
+            transition: transform .4s cubic-bezier(.23,1,.32,1), box-shadow .3s !important;
+        }
+
+        .pvs-card:hover {
+            transform: perspective(900px) translateZ(10px) rotateY(-1.5deg);
+            box-shadow: 0 16px 60px rgba(0,0,0,.35), 0 0 0 1px rgba(34,197,94,.12);
+        }
+
+        /* ── Demo visual 3D card ── */
+        .demo-visual {
+            transition: transform .4s cubic-bezier(.23,1,.32,1), box-shadow .3s !important;
+            background: rgba(13,22,38,.7) !important;
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(34,197,94,.15) !important;
+        }
+
+        .demo-visual:hover {
+            transform: perspective(800px) rotateX(1deg) rotateY(-2deg) translateZ(8px) !important;
+            box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 40px rgba(34,197,94,.1) !important;
+        }
+
+        /* ── HIW cards 3D ── */
+        .hiw-step {
+            transition: transform .4s cubic-bezier(.23,1,.32,1);
+        }
+
+        .hiw-step:hover {
+            transform: translateZ(12px) translateY(-6px);
+        }
+
+        /* ── Neon green highlight on scroll progress ── */
+        .neon-section-hint {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(34,197,94,.4), transparent);
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 1. NAVBAR                          -->
+    <!-- ══════════════════════════════════ -->
+    <nav class="navbar" id="navbar">
+        <div class="container navbar-inner">
+            <a href="#" class="nav-logo">
+                <div class="nav-logo-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                        <polyline points="16 7 22 7 22 13" />
+                    </svg></div>
+                Senti<span>Market</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#signal-flow">AI Signals</a></li>
+                <li><a href="#demo">Demo</a></li>
+            </ul>
+            <div class="nav-right">
+                <a href="login.html"><button class="btn-ghost">Log In</button></a>
+                <a href="register.html"><button class="btn-primary">Get Started →</button></a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 2. HERO                            -->
+    <!-- ══════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════
+         GLOBAL PARTICLE CANVAS (fixed, full-page)
+    ═══════════════════════════════════════════ -->
+    <canvas id="particleCanvas"></canvas>
+
+    <section class="hero">
+        <!-- 3D Hero Canvas (Three.js lazy-loaded) -->
+        <canvas id="heroCanvas"></canvas>
+        <div class="hero-badge"><span class="tag">🧠 AI-Powered Sentiment Engine</span></div>
+        <h1 class="hero-headline">
+            Decode Market Hype.<br><span class="hl-green">Trade with Intelligence.</span>
+        </h1>
+        <p class="hero-sub">
+            SentiMarket fuses real-time social sentiment, on-chain signals, and AI-driven hype scoring to give you a
+            decisive edge in crypto markets.
+        </p>
+        <div class="hero-actions">
+            <a href="register.html"><button class="btn-primary-lg">Start Trading Free →</button></a>
+            <a href="#demo"><button class="btn-outline-lg">See Live Demo</button></a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-num green" id="stat-assets">24+</div>
+                <div class="hero-stat-lbl">Assets Tracked</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-num green" id="stat-signals">1,200+</div>
+                <div class="hero-stat-lbl">Daily AI Signals</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-num green" id="stat-acc">87%</div>
+                <div class="hero-stat-lbl">Signal Accuracy</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-num green">
+                    < 200ms</div>
+                        <div class="hero-stat-lbl">Signal Latency</div>
+                </div>
+            </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 3. MINI DASHBOARD PREVIEW          -->
+    <!-- ══════════════════════════════════ -->
+    <section class="dashboard-preview reveal">
+        <div class="dash-frame">
+            <div class="dash-topbar">
+                <div class="dash-dot dash-dot-r"></div>
+                <div class="dash-dot dash-dot-y"></div>
+                <div class="dash-dot dash-dot-g"></div>
+                <div class="dash-url">app.sentimarket.io/dashboard</div>
+            </div>
+            <div class="dash-content">
+                <div class="dash-kpi">
+                    <div class="dash-kpi-lbl">Asset</div>
+                    <div class="dash-kpi-val" id="dkpi-asset">DOGE</div>
+                    <div class="dash-kpi-ch">Dogecoin</div>
+                </div>
+                <div class="dash-kpi">
+                    <div class="dash-kpi-lbl">Price USD</div>
+                    <div class="dash-kpi-val" id="dkpi-price">$0.1842</div>
+                    <div class="dash-kpi-ch">▲ +5.3%</div>
+                </div>
+                <div class="dash-kpi">
+                    <div class="dash-kpi-lbl">Sentiment</div>
+                    <div class="dash-kpi-val" id="dkpi-sent">+65%</div>
+                    <div class="dash-kpi-ch">BULLISH</div>
+                </div>
+                <div class="dash-kpi">
+                    <div class="dash-kpi-lbl">Hype Score</div>
+                    <div class="dash-kpi-val" id="dkpi-hype">82</div>
+                    <div class="dash-kpi-ch">EXTREME</div>
+                </div>
+                <div class="dash-chart-area">
+                    <canvas id="demoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 4. LIVE TICKER                     -->
+    <!-- ══════════════════════════════════ -->
+    <section class="ticker-section">
+        <div id="tickerTrack" class="ticker-track"></div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 5. PROBLEM vs SOLUTION             -->
+    <!-- ══════════════════════════════════ -->
+    <section class="pvs-section" id="features">
+        <div class="container">
+            <div class="pvs-card reveal">
+                <div class="pvs-label">✕ The Problem</div>
+                <div class="pvs-title">Trading crypto on gut feel is expensive.</div>
+                <ul class="pvs-list">
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✕</div>Retail traders react to hype cycles hours too late
+                    </li>
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✕</div>Social signals scattered across Twitter, Reddit, Telegram
+                    </li>
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✕</div>No unified system to quantify "hype" as a trading signal
+                    </li>
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✕</div>Emotional decisions in volatile markets lead to losses
+                    </li>
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✕</div>Institutional tools unavailable to retail traders
+                    </li>
+                </ul>
+            </div>
+            <div class="pvs-card solution reveal reveal-delay-2">
+                <div class="pvs-label">✓ SentiMarket Solves This</div>
+                <div class="pvs-title">AI that reads the crowd before you do.</div>
+                <ul class="pvs-list">
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✓</div>Real-time hype score across 24+ crypto assets
+                    </li>
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✓</div>AI aggregates social data into a single confidence score
+                    </li>
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✓</div>Signal generation with 87% historical accuracy
+                    </li>
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✓</div>Remove emotion — trade on data, not FOMO
+                    </li>
+                    <li class="pvs-item">
+                        <div class="pvs-icon">✓</div>Institutional-grade intelligence at retail speed
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 6. FEATURES GRID                   -->
+    <!-- ══════════════════════════════════ -->
+    <section class="features-section">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="tag">Platform Features</span>
+                <h2 class="section-title">Everything you need to trade smarter.</h2>
+                <p class="section-sub">Built for speed, accuracy, and clarity — not complexity.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feat-card reveal">
+                    <div class="feat-icon">🧠</div>
+                    <div class="feat-title">AI Sentiment Engine</div>
+                    <div class="feat-desc">Aggregates Twitter, Reddit, and Telegram signals into real-time sentiment
+                        scores with sub-200ms latency.</div>
+                </div>
+                <div class="feat-card reveal reveal-delay-1">
+                    <div class="feat-icon">📈</div>
+                    <div class="feat-title">Hype Score System</div>
+                    <div class="feat-desc">Patent-pending 0–100 Hype Score quantifies social momentum with 4 weighted
+                        signal dimensions.</div>
+                </div>
+                <div class="feat-card reveal reveal-delay-2">
+                    <div class="feat-icon">⚡</div>
+                    <div class="feat-title">Live Signal Feed</div>
+                    <div class="feat-desc">BUY / HOLD / SELL signals generated in real time, with confidence percentage
+                        and reasoning.</div>
+                </div>
+                <div class="feat-card reveal reveal-delay-1">
+                    <div class="feat-icon">🔗</div>
+                    <div class="feat-title">Correlation Matrix</div>
+                    <div class="feat-desc">Short / medium / long-term hype-to-price correlations updated every 60
+                        seconds for each asset.</div>
+                </div>
+                <div class="feat-card reveal reveal-delay-2">
+                    <div class="feat-icon">🛡</div>
+                    <div class="feat-title">AI Personality Modes</div>
+                    <div class="feat-desc">Switch between Conservative, Balanced, and Aggressive analyst modes to match
+                        your risk appetite.</div>
+                </div>
+                <div class="feat-card reveal reveal-delay-3">
+                    <div class="feat-icon">🎯</div>
+                    <div class="feat-title">Smart Trade Confirmation</div>
+                    <div class="feat-desc">Two-step AI confirmation layer before any trade action, with risk assessment
+                        and stop-loss guidance.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 7. AI SIGNAL FLOW                  -->
+    <!-- ══════════════════════════════════ -->
+    <section class="flow-section" id="signal-flow">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="tag">How AI Signals Work</span>
+                <h2 class="section-title">From raw noise to precise signals.</h2>
+                <p class="section-sub">Seven layers of intelligence between social data and your trade confirmation.</p>
+            </div>
+            <div class="flow-row reveal">
+                <div class="flow-node">
+                    <div class="flow-circle">📡</div>
+                    <div class="flow-lbl">Social<br>Data Ingestion</div>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-node">
+                    <div class="flow-circle">🔍</div>
+                    <div class="flow-lbl">NLP<br>Sentiment Parse</div>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-node">
+                    <div class="flow-circle active">🧠</div>
+                    <div class="flow-lbl">Hype Score<br>Generation</div>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-node">
+                    <div class="flow-circle">📊</div>
+                    <div class="flow-lbl">Correlation<br>Analysis</div>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-node">
+                    <div class="flow-circle">⚡</div>
+                    <div class="flow-lbl">Signal<br>Output</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 8. DEMO SECTION                    -->
+    <!-- ══════════════════════════════════ -->
+    <section class="demo-section" id="demo">
+        <div class="container">
+            <div class="demo-inner">
+                <div class="demo-text reveal">
+                    <span class="tag">Live Dashboard</span>
+                    <h2 class="demo-title">See intelligence in action, in real-time.</h2>
+                    <p class="demo-desc">The SentiMarket dashboard gives you a complete picture — price, hype,
+                        sentiment, and AI recommendation — in a single unified view.</p>
+                    <ul class="demo-points">
+                        <li class="demo-point">
+                            <div class="demo-point-dot">✓</div>Live candlestick charts with volume overlay
+                        </li>
+                        <li class="demo-point">
+                            <div class="demo-point-dot">✓</div>Real-time AI explanation for every signal
+                        </li>
+                        <li class="demo-point">
+                            <div class="demo-point-dot">✓</div>Switch between 24+ assets instantly
+                        </li>
+                        <li class="demo-point">
+                            <div class="demo-point-dot">✓</div>Keyboard-first UI for fast decision making
+                        </li>
+                    </ul>
+                    <div class="demo-actions">
+                        <a href="index.html"><button class="btn-primary-lg">Open Dashboard →</button></a>
+                    </div>
+                </div>
+                <div class="demo-visual reveal reveal-delay-2">
+                    <div class="demo-signal">
+                        <div class="demo-signal-icon">🟢</div>
+                        <div>
+                            <div class="demo-signal-sym">DOGE / USD</div>
+                            <div class="demo-signal-detail">AI Signal: Strong BUY · Conservative Mode</div>
+                        </div>
+                        <div class="demo-signal-conf">
+                            <div class="demo-signal-pct">87%</div>
+                            <div class="demo-signal-lbl">Confidence</div>
+                        </div>
+                    </div>
+                    <div class="demo-mini-stat"><span class="demo-mini-k">Hype Score</span><span
+                            class="demo-mini-v up">82 / 100</span></div>
+                    <div class="demo-mini-stat"><span class="demo-mini-k">Sentiment</span><span
+                            class="demo-mini-v up">+65% Bullish</span></div>
+                    <div class="demo-mini-stat"><span class="demo-mini-k">Mention Growth</span><span
+                            class="demo-mini-v up">+41%</span></div>
+                    <div class="demo-mini-stat"><span class="demo-mini-k">Volume Spike</span><span
+                            class="demo-mini-v up">+18%</span></div>
+                    <div class="demo-mini-stat"><span class="demo-mini-k">EMA Position</span><span
+                            class="demo-mini-v up">Above 20 EMA</span></div>
+                    <div class="demo-mini-stat"><span class="demo-mini-k">Correlation (Short)</span><span
+                            class="demo-mini-v up">0.78</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 9. HOW IT WORKS                    -->
+    <!-- ══════════════════════════════════ -->
+    <section class="hiw-section" id="how-it-works">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="tag">Getting Started</span>
+                <h2 class="section-title">From zero to your first signal in 3 steps.</h2>
+            </div>
+            <div class="hiw-steps">
+                <div class="hiw-step reveal">
+                    <div class="hiw-num" data-n="1">🎯</div>
+                    <h3 class="hiw-title">Create Your Account</h3>
+                    <p class="hiw-desc">Sign up in 30 seconds. No credit card. Choose your AI personality mode and risk
+                        tolerance to personalise your signals.</p>
+                </div>
+                <div class="hiw-step reveal reveal-delay-2">
+                    <div class="hiw-num" data-n="2">📊</div>
+                    <h3 class="hiw-title">Pick Your Assets</h3>
+                    <p class="hiw-desc">Select from 24+ tracked crypto assets. The AI dashboard updates in real-time as
+                        hype cycles emerge and collapse.</p>
+                </div>
+                <div class="hiw-step reveal reveal-delay-4">
+                    <div class="hiw-num" data-n="3">⚡</div>
+                    <h3 class="hiw-title">Act on AI Signals</h3>
+                    <p class="hiw-desc">Receive BUY / HOLD / SELL signals with full AI explanation, confidence score,
+                        and technical confirmation backing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 10. FINAL CTA                      -->
+    <!-- ══════════════════════════════════ -->
+    <section class="cta-section">
+        <div class="cta-glow"></div>
+        <div class="container reveal">
+            <h2 class="cta-title">Stop guessing.<br><span>Start knowing.</span></h2>
+            <p class="cta-sub">Join traders who use AI-grade sentiment intelligence to make smarter, faster, more
+                confident decisions.</p>
+            <div class="cta-actions">
+                <a href="register.html"><button class="btn-primary-lg">Get Started Free →</button></a>
+                <a href="index.html"><button class="btn-outline-lg">View Dashboard</button></a>
+            </div>
+            <p class="cta-note">Free to start · No credit card required · Cancel anytime</p>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════ -->
+    <!-- 11. FOOTER                         -->
+    <!-- ══════════════════════════════════ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <a href="#" class="nav-logo">
+                        <div class="nav-logo-icon">⬡</div>
+                        Senti<span>Market</span>
+                    </a>
+                    <p class="footer-brand-desc">AI-powered crypto sentiment intelligence. Built for traders who want an
+                        edge, not noise.</p>
+                </div>
+                <div>
+                    <div class="footer-col-title">Platform</div>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Dashboard</a></li>
+                        <li><a href="#">AI Signals</a></li>
+                        <li><a href="#">Hype Scanner</a></li>
+                        <li><a href="#">Watchlist</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="footer-col-title">Company</div>
+                    <ul class="footer-links">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press Kit</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="footer-col-title">Legal</div>
+                    <ul class="footer-links">
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Risk Disclosure</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2025 SentiMarket. Not financial advice. AI-generated signals.</span>
+                <div class="footer-badges">
+                    <span class="footer-badge">🔒 SOC 2</span>
+                    <span class="footer-badge">⚡ < 200ms</span>
+                            <span class="footer-badge">🌍 Global</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* ═══════════════════════════════════════════
+           LANDING PAGE JS
+        ═══════════════════════════════════════════ */
+
+        /* ── Navbar scroll ── */
+        window.addEventListener('scroll', () => {
+            document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 40);
+        });
+
+        /* ── Scroll reveal ── */
+        const revealObserver = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.12 });
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        /* ── Ticker tape ── */
+        const TICKER_DATA = [
+            { sym: 'DOGE', price: '$0.1842', chg: '+5.3%', up: true },
+            { sym: 'PEPE', price: '$0.0000142', chg: '+12.7%', up: true },
+            { sym: 'SOL', price: '$182.40', chg: '+3.1%', up: true },
+            { sym: 'AVAX', price: '$38.90', chg: '-1.2%', up: false },
+            { sym: 'BTC', price: '$67,420', chg: '+2.4%', up: true },
+            { sym: 'ETH', price: '$3,510', chg: '+1.8%', up: true },
+            { sym: 'BNB', price: '$412.00', chg: '-0.6%', up: false },
+            { sym: 'ADA', price: '$0.612', chg: '+4.2%', up: true },
+            { sym: 'DOT', price: '$9.48', chg: '-2.1%', up: false },
+            { sym: 'MATIC', price: '$0.886', chg: '+6.5%', up: true },
+        ];
+        function buildTicker() {
+            const track = document.getElementById('tickerTrack');
+            const items = [...TICKER_DATA, ...TICKER_DATA]; // double for loop
+            track.innerHTML = items.map(t => `
+    <div class="ticker-item">
+      <div class="ticker-dot ${t.up ? 'up' : 'down'}"></div>
+      <span class="ticker-sym">${t.sym}</span>
+      <span class="ticker-price">${t.price}</span>
+      <span class="ticker-chg ${t.up ? 'up' : 'down'}">${t.chg}</span>
+    </div>
+  `).join('');
+        }
+        buildTicker();
+
+        /* ── Mini demo chart (pure Canvas, no lib needed) ── */
+        function drawDemoChart() {
+            const canvas = document.getElementById('demoChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+            const W = canvas.width, H = canvas.height;
+
+            // Generate fake candles
+            const candles = [];
+            let price = 0.17;
+            for (let i = 0; i < 60; i++) {
+                const open = price;
+                const close = open + (Math.random() - 0.42) * 0.008;
+                const high = Math.max(open, close) + Math.random() * 0.003;
+                const low = Math.min(open, close) - Math.random() * 0.003;
+                candles.push({ open, close, high, low });
+                price = close;
+            }
+
+            const prices = candles.map(c => [c.high, c.low]).flat();
+            const minP = Math.min(...prices), maxP = Math.max(...prices);
+            const yScale = p => H - ((p - minP) / (maxP - minP)) * (H - 12) - 6;
+
+            const cw = (W / candles.length) * 0.7;
+            const gap = W / candles.length;
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Grid lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.lineWidth = 1;
+            for (let i = 1; i < 4; i++) {
+                ctx.beginPath(); ctx.moveTo(0, (H / 4) * i); ctx.lineTo(W, (H / 4) * i); ctx.stroke();
+            }
+
+            candles.forEach((c, i) => {
+                const x = i * gap + gap / 2;
+                const up = c.close >= c.open;
+                const color = up ? '#22c55e' : '#ef4444';
+
+                // Wick
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, yScale(c.high));
+                ctx.lineTo(x, yScale(c.low));
+                ctx.stroke();
+
+                // Body
+                ctx.fillStyle = color;
+                const y1 = yScale(Math.max(c.open, c.close));
+                const y2 = yScale(Math.min(c.open, c.close));
+                ctx.fillRect(x - cw / 2, y1, cw, Math.max(y2 - y1, 1));
+            });
+
+            // Glow overlay for last price
+            const lastY = yScale(candles[candles.length - 1].close);
+            ctx.strokeStyle = 'rgba(34,197,94,0.6)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(0, lastY); ctx.lineTo(W, lastY); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        window.addEventListener('load', drawDemoChart);
+        window.addEventListener('resize', drawDemoChart);
+
+        /* ── Live update effect on demo KPIs ── */
+        const DEMO_ASSETS = [
+            { asset: 'DOGE', price: '$0.1842', sent: '+65%', hype: '82' },
+            { asset: 'BTC', price: '$67,420', sent: '+58%', hype: '74' },
+            { asset: 'PEPE', price: '$0.0000142', sent: '+81%', hype: '91' },
+            { asset: 'SOL', price: '$182.40', sent: '+52%', hype: '68' },
+        ];
+        let demoIdx = 0;
+        setInterval(() => {
+            demoIdx = (demoIdx + 1) % DEMO_ASSETS.length;
+            const a = DEMO_ASSETS[demoIdx];
+            document.getElementById('dkpi-asset').textContent = a.asset;
+            document.getElementById('dkpi-price').textContent = a.price;
+            document.getElementById('dkpi-sent').textContent = a.sent;
+            document.getElementById('dkpi-hype').textContent = a.hype;
+            drawDemoChart();
+        }, 3000);
+
+        /* ── Smooth counter animation for hero stats ── */
+        function animateCount(el, target, suffix = '') {
+            let current = 0;
+            const isFloat = target % 1 !== 0;
+            const duration = 1400;
+            const start = performance.now();
+            const update = now => {
+                const t = Math.min((now - start) / duration, 1);
+                const ease = 1 - Math.pow(1 - t, 3);
+                current = isFloat ? (target * ease).toFixed(1) : Math.round(target * ease);
+                el.textContent = current + suffix;
+                if (t < 1) requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+        }
+
+        const statsObserver = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) {
+                animateCount(document.getElementById('stat-assets'), 24, '+');
+                animateCount(document.getElementById('stat-signals'), 1200, '+');
+                animateCount(document.getElementById('stat-acc'), 87, '%');
+                statsObserver.disconnect();
+            }
+        }, { threshold: 0.5 });
+        const statsSection = document.querySelector('.hero-stats');
+        if (statsSection) statsObserver.observe(statsSection);
+    </script>
+
+    <!-- Neon glow cursor — same as dashboard -->
+    <script src="cursor.js"></script>
+    <script>smCursor.enable();</script>
+
+    <!-- ═══════════════════════════════════════════
+         3D ENHANCEMENT SCRIPTS
+    ═══════════════════════════════════════════ -->
+    <script>
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       1. GLOBAL FLOATING PARTICLE CANVAS
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    (function initParticleCanvas() {
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        const isMobile = window.innerWidth < 768;
+        const COUNT = isMobile ? 30 : 80;
+        const CONNECT_DIST = 120;
+
+        let W, H, particles = [];
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+
+        function Particle() {
+            this.x = Math.random() * W;
+            this.y = Math.random() * H;
+            this.vx = (Math.random() - .5) * .35;
+            this.vy = (Math.random() - .5) * .35;
+            this.r = Math.random() * 1.5 + .5;
+            this.alpha = Math.random() * .12 + .04;
+        }
+
+        function build() {
+            particles = [];
+            for (let i = 0; i < COUNT; i++) particles.push(new Particle());
+        }
+
+        function tick() {
+            ctx.clearRect(0, 0, W, H);
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+                if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(34,197,94,${p.alpha})`;
+                ctx.fill();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    const q = particles[j];
+                    const dx = p.x - q.x, dy = p.y - q.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < CONNECT_DIST) {
+                        const alpha = (1 - dist / CONNECT_DIST) * .05;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(q.x, q.y);
+                        ctx.strokeStyle = `rgba(34,197,94,${alpha})`;
+                        ctx.lineWidth = .5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+
+        window.addEventListener('resize', () => { resize(); build(); });
+        resize(); build(); tick();
+    })();
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       2. HERO THREE.JS 3D CANVAS (lazy-loaded ES module)
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    (function initHero3D() {
+        const heroSection = document.querySelector('.hero');
+        const heroCanvas = document.getElementById('heroCanvas');
+        if (!heroCanvas) return;
+
+        /* Lazy-load Three.js only when hero is visible */
+        const heroObserver = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) {
+                heroObserver.disconnect();
+                loadThreeScene();
+            }
+        }, { threshold: 0.01 });
+        heroObserver.observe(heroSection);
+
+        function loadThreeScene() {
+            /* Dynamically load Three.js from CDN */
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.min.js';
+            script.onload = () => buildScene();
+            document.head.appendChild(script);
+        }
+
+        function buildScene() {
+            const W = heroSection.offsetWidth;
+            const H = heroSection.offsetHeight;
+            const renderer = new THREE.WebGLRenderer({ canvas: heroCanvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(W, H);
+            renderer.setClearColor(0x000000, 0);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 200);
+            camera.position.set(0, 2, 18);
+
+            /* ── Ambient lighting ── */
+            scene.add(new THREE.AmbientLight(0x050c18, 1.5));
+            const greenLight = new THREE.PointLight(0x22c55e, 4, 40);
+            greenLight.position.set(0, 8, 6);
+            scene.add(greenLight);
+            const blueLight = new THREE.PointLight(0x0a1628, 2, 30);
+            blueLight.position.set(-10, -4, 4);
+            scene.add(blueLight);
+
+            /* ── Animated 3D Grid Plane ── */
+            const gridHelper = new THREE.GridHelper(60, 30, 0x22c55e, 0x0d1e10);
+            gridHelper.position.y = -5;
+            gridHelper.material.opacity = 0.22;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            /* ── Particle Field ── */
+            const isMobile = window.innerWidth < 768;
+            const PARTS = isMobile ? 200 : 500;
+            const pPositions = new Float32Array(PARTS * 3);
+            for (let i = 0; i < PARTS; i++) {
+                pPositions[i*3]   = (Math.random()-0.5)*60;
+                pPositions[i*3+1] = (Math.random()-0.5)*30;
+                pPositions[i*3+2] = (Math.random()-0.5)*30;
+            }
+            const pGeo = new THREE.BufferGeometry();
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+            const pMat = new THREE.PointsMaterial({ color: 0x22c55e, size: 0.06, transparent: true, opacity: 0.55 });
+            const particleMesh = new THREE.Points(pGeo, pMat);
+            scene.add(particleMesh);
+
+            /* ── Neural Network Lines ── */
+            const nodeCount = isMobile ? 8 : 16;
+            const nodePositions = [];
+            for (let i = 0; i < nodeCount; i++) {
+                nodePositions.push(new THREE.Vector3(
+                    (Math.random()-0.5)*28,
+                    (Math.random()-0.5)*14,
+                    (Math.random()-0.5)*10
+                ));
+            }
+
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.12 });
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i+1; j < nodeCount; j++) {
+                    if (Math.random() > 0.5) continue;
+                    const geo = new THREE.BufferGeometry().setFromPoints([nodePositions[i], nodePositions[j]]);
+                    scene.add(new THREE.Line(geo, lineMat));
+                }
+            }
+
+            /* Node glow spheres */
+            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.6 });
+            nodePositions.forEach(pos => {
+                const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), nodeMat);
+                sphere.position.copy(pos);
+                scene.add(sphere);
+            });
+
+            /* ── Crypto Coin Rings (BTC, ETH, DOGE) ── */
+            const coins = [
+                { x: -7, y: 2, z: -2, color: 0xf7941d, speed: 0.008, label: 'BTC' },
+                { x:  6, y: 3, z: -4, color: 0x627eea, speed: 0.011, label: 'ETH' },
+                { x:  0, y: -2.5, z: -1, color: 0x22c55e, speed: 0.006, label: 'DOGE' },
+            ];
+
+            const coinMeshes = coins.map(c => {
+                const group = new THREE.Group();
+                /* Coin body */
+                const coinGeo = new THREE.TorusGeometry(0.6, 0.08, 12, 48);
+                const coinMat = new THREE.MeshPhongMaterial({
+                    color: c.color, emissive: c.color, emissiveIntensity: 0.5,
+                    transparent: true, opacity: 0.85, shininess: 80
+                });
+                group.add(new THREE.Mesh(coinGeo, coinMat));
+
+                /* Inner glow ring */
+                const glowGeo = new THREE.TorusGeometry(0.68, 0.02, 6, 48);
+                const glowMat = new THREE.MeshBasicMaterial({
+                    color: c.color, transparent: true, opacity: 0.25
+                });
+                group.add(new THREE.Mesh(glowGeo, glowMat));
+
+                group.position.set(c.x, c.y, c.z);
+                group.userData = { speed: c.speed, baseY: c.y };
+                scene.add(group);
+                return group;
+            });
+
+            /* ── Mouse parallax ── */
+            let targetRX = 0, targetRY = 0, currentRX = 0, currentRY = 0;
+            let camTargetY = 0;
+
+            window.addEventListener('mousemove', e => {
+                const nx = (e.clientX / window.innerWidth  - 0.5) * 2;
+                const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+                targetRY = nx * 0.4;
+                targetRX = -ny * 0.2;
+            });
+
+            /* Scroll-based camera drift */
+            window.addEventListener('scroll', () => {
+                camTargetY = window.scrollY * 0.006;
+            });
+
+            /* Pause when out of view */
+            let heroVisible = true;
+            new IntersectionObserver(entries => {
+                heroVisible = entries[0].isIntersecting;
+            }, { threshold: 0.01 }).observe(heroSection);
+
+            /* Resize handler */
+            window.addEventListener('resize', () => {
+                const nW = heroSection.offsetWidth;
+                const nH = heroSection.offsetHeight;
+                camera.aspect = nW / nH;
+                camera.updateProjectionMatrix();
+                renderer.setSize(nW, nH);
+            });
+
+            /* ── Animation loop (delta-time based for frame-rate independence) ── */
+            let t = 0;
+            let lastTimestamp = 0;
+            function animate(timestamp) {
+                requestAnimationFrame(animate);
+                if (!heroVisible) return;
+
+                /* Delta time in seconds, clamped to 100ms max to handle tab switching */
+                const delta = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+                lastTimestamp = timestamp;
+                t += delta;
+
+                /* Smooth camera lerp — faster factor for snappier feel */
+                const lerpSpeed = 1 - Math.pow(0.04, delta);
+                currentRX += (targetRX - currentRX) * lerpSpeed;
+                currentRY += (targetRY - currentRY) * lerpSpeed;
+                camera.rotation.x = currentRX;
+                camera.rotation.y = currentRY;
+
+                /* Smooth camera Y with lerp */
+                const camLerp = 1 - Math.pow(0.02, delta);
+                camera.position.y += (-camTargetY + 2 - camera.position.y) * camLerp;
+
+                /* Grid drift — continuous, no jump */
+                gridHelper.position.z = (t * 0.3) % 100;
+
+                /* Particle gentle drift */
+                particleMesh.rotation.y = t * 0.02;
+                particleMesh.rotation.x = t * 0.005;
+
+                /* Coin float + spin — delta-time based */
+                coinMeshes.forEach((g, i) => {
+                    g.rotation.y += g.userData.speed * delta * 60;
+                    g.rotation.z += g.userData.speed * 0.3 * delta * 60;
+                    g.position.y = g.userData.baseY + Math.sin(t + i * 2.1) * 0.5;
+                });
+
+                /* Green point light pulse */
+                greenLight.intensity = 4 + Math.sin(t * 1.5) * 1.5;
+                greenLight.position.x = Math.sin(t * 0.3) * 6;
+
+                renderer.render(scene, camera);
+            }
+            requestAnimationFrame(animate);
+        }
+    })();
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       3. HERO MOUSE PARALLAX ON TEXT
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    (function heroParallax() {
+        const hero = document.querySelector('.hero');
+        const headine = document.querySelector('.hero-headline');
+        const sub = document.querySelector('.hero-sub');
+        const badge = document.querySelector('.hero-badge');
+
+        if (!hero || !headine) return;
+
+        /* Set smooth CSS transition on elements for lerp spring-back */
+        [headine, sub, badge].forEach(el => {
+            if (el) el.style.transition = 'transform 0.08s linear';
+        });
+
+        let targetTX = 0, targetTY = 0;
+        let currentTX = 0, currentTY = 0;
+        let rafId = null;
+        let isInside = false;
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        function updateParallax() {
+            currentTX = lerp(currentTX, targetTX, 0.08);
+            currentTY = lerp(currentTY, targetTY, 0.08);
+
+            const rx = -currentTY * 0.3, ry = currentTX * 0.3;
+            headine.style.transition = 'none';
+            headine.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(8px)`;
+            if (sub) {
+                sub.style.transition = 'none';
+                sub.style.transform = `perspective(1000px) rotateX(${-currentTY*0.15}deg) rotateY(${currentTX*0.15}deg)`;
+            }
+            if (badge) {
+                badge.style.transition = 'none';
+                badge.style.transform = `perspective(1000px) rotateX(${-currentTY*0.1}deg) rotateY(${currentTX*0.1}deg) translateZ(4px)`;
+            }
+
+            const stillMoving = Math.abs(currentTX - targetTX) > 0.01 || Math.abs(currentTY - targetTY) > 0.01;
+            if (stillMoving || isInside) rafId = requestAnimationFrame(updateParallax);
+            else rafId = null;
+        }
+
+        hero.addEventListener('mousemove', e => {
+            const rect = hero.getBoundingClientRect();
+            const nx = (e.clientX - rect.left) / rect.width - 0.5;
+            const ny = (e.clientY - rect.top)  / rect.height - 0.5;
+            targetTX = nx * 12;
+            targetTY = ny * 8;
+            isInside = true;
+            if (!rafId) rafId = requestAnimationFrame(updateParallax);
+        });
+
+        hero.addEventListener('mouseleave', () => {
+            targetTX = 0;
+            targetTY = 0;
+            isInside = false;
+            if (!rafId) rafId = requestAnimationFrame(updateParallax);
+        });
+    })();
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       4. FEATURE CARDS — MOUSE PROXIMITY INTERACTION
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    (function featCardProximity() {
+        const cards = document.querySelectorAll('.feat-card');
+        if (!cards.length) return;
+
+        /* Per-card lerped state */
+        const state = Array.from(cards).map(() => ({
+            targetRX: 0, targetRY: 0, targetBorder: 0,
+            currentRX: 0, currentRY: 0, currentBorder: 0,
+            rafId: null
+        }));
+
+        function animateCard(card, s) {
+            s.currentRX += (s.targetRX - s.currentRX) * 0.1;
+            s.currentRY += (s.targetRY - s.currentRY) * 0.1;
+            s.currentBorder += (s.targetBorder - s.currentBorder) * 0.1;
+
+            if (!card.matches(':hover')) {
+                card.style.transform = `perspective(800px) rotateX(${s.currentRX}deg) rotateY(${s.currentRY}deg) translateZ(${s.currentBorder * 4}px)`;
+                card.style.borderColor = `rgba(34,197,94,${s.currentBorder * 0.3})`;
+            }
+
+            const stillMoving = Math.abs(s.currentRX) > 0.01 || Math.abs(s.currentRY) > 0.01 || Math.abs(s.currentBorder) > 0.001;
+            if (stillMoving) s.rafId = requestAnimationFrame(() => animateCard(card, s));
+            else s.rafId = null;
+        }
+
+        document.addEventListener('mousemove', e => {
+            cards.forEach((card, idx) => {
+                const s = state[idx];
+                const rect = card.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top  + rect.height / 2;
+                const dx = e.clientX - cx;
+                const dy = e.clientY - cy;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const PROX = 220;
+
+                if (dist < PROX && !card.matches(':hover') && dist > 0.1) {
+                    const factor = (1 - dist / PROX) * 6;
+                    s.targetRX = -(dy / dist) * factor;
+                    s.targetRY =  (dx / dist) * factor;
+                    s.targetBorder = 1 - dist / PROX;
+                } else if (!card.matches(':hover')) {
+                    s.targetRX = 0; s.targetRY = 0; s.targetBorder = 0;
+                }
+
+                if (!s.rafId) s.rafId = requestAnimationFrame(() => animateCard(card, s));
+            });
+        });
+    })();
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       5. DASHBOARD CARD — MOUSE TILT
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    (function dashTilt() {
+        const frame = document.querySelector('.dash-frame');
+        if (!frame) return;
+
+        let targetRX = 0, targetRY = 0, targetTY = 0;
+        let currentRX = 0, currentRY = 0, currentTY = 0;
+        let rafId = null;
+        let isHovered = false;
+
+        function animateDash() {
+            currentRX += (targetRX - currentRX) * 0.1;
+            currentRY += (targetRY - currentRY) * 0.1;
+            currentTY += (targetTY - currentTY) * 0.1;
+
+            frame.style.transform = `perspective(1000px) rotateX(${currentRX}deg) rotateY(${currentRY}deg) translateY(${currentTY}px)`;
+
+            const stillMoving = Math.abs(currentRX - targetRX) > 0.01
+                             || Math.abs(currentRY - targetRY) > 0.01
+                             || Math.abs(currentTY - targetTY) > 0.1;
+            if (stillMoving || isHovered) rafId = requestAnimationFrame(animateDash);
+            else {
+                rafId = null;
+                /* Restore idle animation once fully settled */
+                frame.style.transform = '';
+                frame.style.animation = '';
+            }
+        }
+
+        frame.addEventListener('mousemove', e => {
+            const rect = frame.getBoundingClientRect();
+            const nx = (e.clientX - rect.left) / rect.width - 0.5;
+            const ny = (e.clientY - rect.top)  / rect.height - 0.5;
+            frame.style.animation = 'none';
+            targetRX = -ny * 5;
+            targetRY = nx * 7;
+            targetTY = -8;
+            isHovered = true;
+            if (!rafId) rafId = requestAnimationFrame(animateDash);
+        });
+
+        frame.addEventListener('mouseleave', () => {
+            targetRX = 0; targetRY = 0; targetTY = 0;
+            isHovered = false;
+            if (!rafId) rafId = requestAnimationFrame(animateDash);
+        });
+    })();
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       6. BUTTON 3D PRESS + NEON RIPPLE + MAGNETIC HOVER
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    (function buttonEffects() {
+        const btns = document.querySelectorAll('.btn-primary-lg, .btn-primary, .btn-outline-lg');
+
+        btns.forEach(btn => {
+            /* Ripple on click */
+            btn.addEventListener('click', e => {
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height) * 2;
+                const ripple = document.createElement('span');
+                ripple.classList.add('btn-ripple');
+                ripple.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px;`;
+                btn.appendChild(ripple);
+                ripple.addEventListener('animationend', () => ripple.remove());
+            });
+
+            /* Magnetic hover */
+            btn.addEventListener('mousemove', e => {
+                const rect = btn.getBoundingClientRect();
+                const nx = (e.clientX - rect.left) / rect.width  - 0.5;
+                const ny = (e.clientY - rect.top)  / rect.height - 0.5;
+                btn.style.transform = `translate(${nx*6}px, ${ny*4}px)`;
+            });
+
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = '';
+            });
+        });
+    })();
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       7. AI SIGNAL FLOW — STAGGER REVEAL + GSAP-LIKE ANIMATION
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    (function flowAnimation() {
+        const flowRow = document.querySelector('.flow-row');
+        if (!flowRow) return;
+
+        const nodes = flowRow.querySelectorAll('.flow-node');
+        const arrows = flowRow.querySelectorAll('.flow-arrow');
+
+        /* CSS-based stagger reveal triggered by IntersectionObserver */
+        const flowObserver = new IntersectionObserver(entries => {
+            if (!entries[0].isIntersecting) return;
+            flowObserver.disconnect();
+
+            nodes.forEach((node, i) => {
+                setTimeout(() => {
+                    node.classList.add('flow-visible');
+                    node.style.transform = 'translateZ(' + (i % 2 === 0 ? 0 : 8) + 'px)';
+                    node.style.opacity = '1';
+                }, i * 180);
+            });
+
+            /* Pulse wave on arrows sequentially */
+            arrows.forEach((arrow, i) => {
+                setTimeout(() => {
+                    arrow.style.background = 'linear-gradient(90deg, transparent, rgba(34,197,94,.6), transparent)';
+                    arrow.style.transition = 'background .5s ease';
+                }, i * 180 + 90);
+            });
+
+            /* Cycle active class across nodes */
+            let activeIdx = 2; // start with brain node
+            setInterval(() => {
+                nodes.forEach(n => n.querySelector('.flow-circle') && n.querySelector('.flow-circle').classList.remove('active'));
+                const target = nodes[activeIdx];
+                if (target) {
+                    const circle = target.querySelector('.flow-circle');
+                    if (circle) circle.classList.add('active');
+                }
+                activeIdx = (activeIdx + 2) % nodes.length;
+            }, 1400);
+        }, { threshold: 0.3 });
+
+        flowObserver.observe(flowRow);
+    })();
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       8. NEON SECTION HINTS (top-border glow on sections)
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    (function sectionHints() {
+        const sections = document.querySelectorAll('.features-section, .flow-section, .demo-section, .hiw-section, .cta-section');
+        sections.forEach(s => {
+            s.style.position = 'relative';
+            const hint = document.createElement('div');
+            hint.className = 'neon-section-hint';
+            s.prepend(hint);
+        });
+    })();
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       9. DEMO CHART — GLOWING LINE EFFECT
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* Enhanced drawDemoChart with glow — replaces base function */
+    window.addEventListener('load', () => {
+        const origDraw = window.drawDemoChart;
+        const canvas = document.getElementById('demoChart');
+        if (!canvas) return;
+
+        /* Add moving gradient overlay on chart area */
+        const chartArea = canvas.parentElement;
+        const overlay = document.createElement('div');
+        overlay.style.cssText = [
+            'position:absolute', 'inset:0', 'pointer-events:none',
+            'background:linear-gradient(90deg,rgba(34,197,94,.04) 0%,transparent 40%,transparent 60%,rgba(34,197,94,.04) 100%)',
+            'animation:chartGlide 4s linear infinite', 'border-radius:inherit'
+        ].join(';');
+        chartArea.appendChild(overlay);
+
+        const style = document.createElement('style');
+        style.textContent = '@keyframes chartGlide{0%{background-position:0% 50%}100%{background-position:200% 50%}}';
+        document.head.appendChild(style);
+    });
+    </script>
+</body>
+
+</html>

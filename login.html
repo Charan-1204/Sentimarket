@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentiMarket | Login</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0d1117;
+            --card: #161b27;
+            --border: #21293a;
+            --green: #22c55e;
+            --orange: #f97316;
+            --red: #ef4444;
+            --muted: #6b7280;
+            --text: #e2e8f0;
+            --dim: #94a3b8;
+            --input: #1c2333;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Inter', sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            padding-top: 52px;
+            /* space for ticker */
+        }
+
+        /* ── CANVAS BACKGROUND ── */
+        #bgCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── TICKER ── */
+        .ticker-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: #0a0f1a;
+            border-bottom: 1px solid var(--border);
+            height: 36px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .ticker-track {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            animation: tickerScroll 28s linear infinite;
+            white-space: nowrap;
+        }
+
+        .ticker-bar:hover .ticker-track {
+            animation-play-state: paused;
+        }
+
+        @keyframes tickerScroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .tick-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 28px;
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--dim);
+            border-right: 1px solid #1e2a3a;
+        }
+
+        .tick-item .sym {
+            color: var(--text);
+        }
+
+        .tick-item .up {
+            color: var(--green);
+        }
+
+        .tick-item .dn {
+            color: var(--red);
+        }
+
+        /* ── MAIN CONTENT (above canvas) ── */
+        .page-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            animation: fadeUp .5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── LOGO ── */
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--green);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .logo-badge {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--green);
+            background: rgba(34, 197, 94, .12);
+            padding: 2px 7px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 197, 94, .3);
+        }
+
+        /* ── CARD ── */
+        @keyframes cardGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 24px 60px rgba(0, 0, 0, .6), 0 0 18px rgba(34, 197, 94, .10), 0 0 0 1px rgba(34, 197, 94, .07);
+            }
+
+            50% {
+                box-shadow: 0 24px 60px rgba(0, 0, 0, .6), 0 0 36px rgba(34, 197, 94, .24), 0 0 0 1px rgba(34, 197, 94, .20);
+            }
+        }
+
+        .auth-card {
+            background: rgba(22, 27, 39, .92);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(34, 197, 94, .18);
+            border-radius: 14px;
+            padding: 36px 40px;
+            width: 100%;
+            max-width: 420px;
+            animation: cardGlow 4s ease-in-out infinite;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .card-sub {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 28px;
+        }
+
+        /* ── FORM ── */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dim);
+            margin-bottom: 6px;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 11px 14px 11px 38px;
+            color: var(--text);
+            font-size: 13px;
+            font-family: var(--sans);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, .12);
+        }
+
+        input::placeholder {
+            color: var(--muted);
+        }
+
+        .forgot {
+            display: block;
+            text-align: right;
+            font-size: 11px;
+            color: var(--green);
+            text-decoration: none;
+            margin-top: 6px;
+        }
+
+        .forgot:hover {
+            text-decoration: underline;
+        }
+
+        /* ── BUTTONS ── */
+        .btn-submit {
+            width: 100%;
+            background: var(--green);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 13px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: var(--sans);
+            cursor: pointer;
+            margin-top: 6px;
+            transition: opacity .15s, transform .1s, box-shadow .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            opacity: .9;
+            box-shadow: 0 0 20px rgba(34, 197, 94, .35);
+        }
+
+        .btn-submit:active {
+            transform: scale(.98);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .btn-social {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 11px;
+            color: var(--dim);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .btn-social:hover {
+            background: #1f2937;
+            border-color: #374151;
+            color: var(--text);
+        }
+
+        /* ── STATS STRIP ── */
+        .stats-strip {
+            display: flex;
+            gap: 32px;
+            margin-top: 32px;
+            padding-top: 22px;
+            border-top: 1px solid var(--border);
+            justify-content: center;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--green);
+            font-family: var(--mono);
+        }
+
+        .stat-lbl {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 2px;
+            letter-spacing: .4px;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .auth-footer a {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Animated background -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Scrolling ticker -->
+    <div class="ticker-bar">
+        <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+
+    <div class="page-content">
+        <div class="logo-wrap">
+            <div class="logo-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                </svg>
+            </div>
+            <span class="logo-text">SentiMarket</span>
+            <span class="logo-badge">PRO</span>
+        </div>
+
+        <div class="auth-card">
+            <div class="card-title">Welcome back</div>
+            <div class="card-sub">Sign in to your trading dashboard</div>
+
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email address</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                <polyline points="22,6 12,13 2,6" />
+                            </svg></span>
+                        <input type="email" placeholder="trader@example.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg></span>
+                        <input type="password" placeholder="••••••••" required>
+                    </div>
+                    <a href="#" class="forgot">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn-submit">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                    </svg>
+                    Sign In to Dashboard
+                </button>
+            </form>
+
+            <div class="divider">or continue with</div>
+            <button class="btn-social">
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Continue with Google
+            </button>
+
+            <div class="stats-strip">
+                <div class="stat-item">
+                    <div class="stat-num">12K+</div>
+                    <div class="stat-lbl">TRADERS</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num">98%</div>
+                    <div class="stat-lbl">ACCURACY</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num">$2.4M</div>
+                    <div class="stat-lbl">TRACKED</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-footer">Don't have an account? <a href="register.html">Create one free</a></div>
+    </div>
+
+    <script>
+        // ── TICKER DATA ──
+        const coins = [
+            { sym: 'BTC', price: '$67,420', chg: '+2.14%', up: true },
+            { sym: 'ETH', price: '$3,820', chg: '+1.87%', up: true },
+            { sym: 'DOGE', price: '$0.1465', chg: '+3.93%', up: true },
+            { sym: 'SOL', price: '$143.90', chg: '-0.72%', up: false },
+            { sym: 'PEPE', price: '$0.0000156', chg: '+5.41%', up: true },
+            { sym: 'AVAX', price: '$39.71', chg: '-7.13%', up: false },
+            { sym: 'BNB', price: '$598.40', chg: '+0.95%', up: true },
+            { sym: 'ADA', price: '$0.4821', chg: '-1.32%', up: false },
+            { sym: 'MATIC', price: '$0.7634', chg: '+2.55%', up: true },
+            { sym: 'SHIB', price: '$0.0000227', chg: '+4.21%', up: true },
+        ];
+
+        function buildTicker() {
+            const track = document.getElementById('tickerTrack');
+            // Duplicate for seamless loop
+            const all = [...coins, ...coins];
+            track.innerHTML = all.map(c => `
+        <span class="tick-item">
+            <span class="sym">${c.sym}</span>
+            <span class="${c.up ? 'up' : 'dn'}">${c.up ? '▲' : '▼'} ${c.price}</span>
+            <span class="${c.up ? 'up' : 'dn'}">${c.chg}</span>
+        </span>`).join('');
+        }
+        buildTicker();
+
+        // Simulate live price jitter every 3s
+        setInterval(() => {
+            const items = document.querySelectorAll('.tick-item');
+            items.forEach((el, i) => {
+                const c = coins[i % coins.length];
+                const jitter = (Math.random() - 0.49) * 0.002;
+                const base = parseFloat(c.price.replace(/[^0-9.]/g, ''));
+                const newVal = Math.max(0.00001, base * (1 + jitter));
+                const fmt = newVal < 0.001 ? newVal.toFixed(7) : newVal < 1 ? newVal.toFixed(4) : newVal.toFixed(2);
+                const priceStr = c.price.includes('$') ? '$' + fmt : fmt;
+                const pct = (jitter * 100 * 5).toFixed(2);
+                const up = jitter > 0;
+                el.querySelector('.up,.dn').className = up ? 'up' : 'dn';
+                el.querySelector('.up,.dn').textContent = (up ? '▲ ' : '▼ ') + priceStr;
+                el.querySelectorAll('.up,.dn')[1].className = up ? 'up' : 'dn';
+                el.querySelectorAll('.up,.dn')[1].textContent = (up ? '+' : '') + pct + '%';
+            });
+        }, 3000);
+
+        // ── CANVAS PARTICLES ──
+        (function () {
+            const canvas = document.getElementById('bgCanvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, particles = [];
+
+            function resize() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            function Particle() {
+                this.reset();
+            }
+            Particle.prototype.reset = function () {
+                this.x = Math.random() * W;
+                this.y = Math.random() * H;
+                this.r = Math.random() * 1.5 + 0.3;
+                this.vx = (Math.random() - 0.5) * 0.3;
+                this.vy = (Math.random() - 0.5) * 0.3;
+                this.alpha = Math.random() * 0.72 + 0.18;
+                this.color = Math.random() > 0.7 ? '34,197,94' : '100,120,160';
+            };
+            Particle.prototype.update = function () {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+            };
+
+            for (let i = 0; i < 90; i++) particles.push(new Particle());
+
+            function draw() {
+                ctx.clearRect(0, 0, W, H);
+
+                // Draw connecting lines
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 120) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(34,197,94,${0.06 * (1 - dist / 120)})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw dots
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
+                    ctx.fill();
+                    p.update();
+                });
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        // ── LOGIN ──
+        function handleLogin(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('.btn-submit');
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg> Signing in...';
+            btn.disabled = true;
+            setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+        }
+    </script>
+    <script src="cursor.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', () => { if (window.smCursor) smCursor.enable(); });</script>
+</body>
+
+</html>

@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentiMarket | Professional Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+
+    <!-- React & Tailwind for Dropdown -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@11.0.8/dist/framer-motion.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <!-- ═══════════════════ HEADER ═══════════════════ -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                        <polyline points="16 7 22 7 22 13" />
+                    </svg>
+                    <span class="logo-text">SentiMarket</span>
+                </div>
+                <!-- Live Market Status -->
+                <div class="market-status-pill" data-tip="Real-time market data active">
+                    <span class="status-dot"></span>
+                    LIVE &bull; MARKET OPEN
+                </div>
+                <!-- Search Pill -->
+                <div class="search-pill" onclick="openSearchModal()" style="cursor:pointer">
+                    <span class="search-label" style="display:flex;align-items:center;gap:4px">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        SEARCH ASSET:
+                    </span>
+                    <div class="search-box" id="searchBoxDisplay">
+                        <span class="search-val" id="searchBoxLabel">Dogecoin</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </div>
+                    <span class="search-shortcut" style="margin-left:4px">K</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <!-- Alerts with badge -->
+                <button class="hbtn" id="alertsBtn" onclick="handleAlertsClick()"
+                    data-tip="Price &amp; sentiment alerts">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    Alerts
+                    <span class="notif-badge" id="alertCount">3</span>
+                </button>
+                <button class="hbtn hbtn-star" onclick="openSearchModal()" data-tip="Your tracked assets">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    Portfolio
+                </button>
+                <div class="hbtn-sep"></div>
+                <!-- User avatar -->
+
+                <div id="trader-dropdown-root" class="relative"></div>
+
+                <button class="hbtn hbtn-settings" id="settingsBtn" title="Settings" data-tip="Preferences">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                </button>
+                <button class="hbtn hbtn-bookmark" id="bookmarkBtn" onclick="toggleBookmark(this)"
+                    data-tip="Bookmark this asset">
+                    <svg id="bookmarkIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                </button>
+            </div>
+
+        </header>
+
+        <!-- ═══════════════════ SECONDARY NAV ═══════════════════ -->
+        <nav class="subnav">
+            <a class="snav-link active" href="index.html">DASHBOARD</a>
+            <a class="snav-link" href="analysis.html">ANALYSIS</a>
+            <a class="snav-link" href="broker-insights-react.html">BROKER INSIGHTS</a>
+            <a class="snav-link" href="#" onclick="handleAlertsClick()">ALERTS <span class="notif-badge"
+                    style="font-size:7px;margin-left:2px" id="alertCountNav">3</span></a>
+            <a class="snav-link" href="#" onclick="openGuide(event)" style="display:inline-flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M12 8h.01M11 12h1v4h1" /></svg>USER GUIDE</a>
+            <span
+                style="margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);padding:0 8px"
+                class="kbd-help">
+                <kbd>K</kbd> Search &nbsp;&nbsp;
+                <kbd>B</kbd> Bookmark &nbsp;&nbsp;
+                <kbd>Esc</kbd> Close
+            </span>
+        </nav>
+
+        <!-- ═══ TICKER TAPE ═══ -->
+        <div class="ticker-tape-wrap">
+            <div class="ticker-tape" id="tickerTape"><!-- filled by app.js --></div>
+        </div>
+
+        <!-- ═══ USER GUIDE MODAL ═══ -->
+        <div id="guideOverlay" class="guide-overlay" onclick="closeGuide(event)">
+            <div class="guide-modal">
+                <div class="guide-header">
+                    <div class="guide-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8h.01M11 12h1v4h1" />
+                        </svg>
+                        SentiMarket User Guide
+                    </div>
+                    <button class="guide-close" onclick="closeGuide()">&times;</button>
+                </div>
+                <div class="guide-body">
+                    <div class="guide-section">
+                        <h3>🚀 Getting Started</h3>
+                        <p>Use the <strong>SEARCH ASSET</strong> bar at the top to switch between cryptocurrencies like
+                            Dogecoin, PEPE, SOL, and AVAX. The entire dashboard updates in real time.</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>📈 Reading the Chart</h3>
+                        <ul>
+                            <li><span class="gg">Green candles</span> = price closed higher than it opened (bullish)
+                            </li>
+                            <li><span class="rr">Red candles</span> = price closed lower (bearish)</li>
+                            <li><span class="yy">Yellow line</span> = 20-period Moving Average (trend indicator)</li>
+                            <li>Volume bars below show trading activity strength</li>
+                        </ul>
+                        <p>Use <strong>1H / 1D / 7D</strong> tabs to switch timeframes.</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>🔥 Hype Score</h3>
+                        <p>The <strong>Hype Score (0–100)</strong> measures social momentum by combining:</p>
+                        <ul>
+                            <li>Mention Growth — how fast talk is spreading</li>
+                            <li>Engagement Spike — likes, shares, comments surge</li>
+                            <li>Sentiment Strength — positive vs. negative ratio</li>
+                            <li>Volume Spike — on-chain trading activity</li>
+                        </ul>
+                        <p>Score <strong>&gt; 75</strong> = Extreme Hype zone. Proceed with caution.</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>🤖 Query Chatbot</h3>
+                        <p>Ask the bot about any asset. Examples:</p>
+                        <ul>
+                            <li>"Should I buy DOGE?"</li>
+                            <li>"What is the PEPE sentiment?"</li>
+                            <li>"Sell signal for SOL?"</li>
+                        </ul>
+                        <p>The bot combines hype data + price signals to give a recommendation.</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>⭐ Your Own Assets</h3>
+                        <p>Track your portfolio in the <strong>Your Own Assets</strong> panel (top right). Green arrows
+                            = positive trend. The <strong>➤</strong> button opens trade details.</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>🔖 Bookmark &amp; Alerts</h3>
+                        <p>Click <strong>Bookmark</strong> in the header to save the current asset. Use the
+                            <strong>Alerts</strong> button to set price &amp; sentiment triggers that notify you when
+                            thresholds are hit.
+                        </p>
+                    </div>
+                </div>
+                <div class="guide-footer">
+                    <span class="muted">SentiMarket v3.0 — AI-Powered Sentiment Trading</span>
+                    <button class="buy-btn" onclick="closeGuide()">Got it!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ MAIN BODY ═══════════════════ -->
+        <div class="body-grid">
+
+            <!-- ══ LEFT PANEL ══ -->
+            <div class="left-panel">
+
+                <!-- KPI CARDS ROW -->
+                <div class="kpi-row">
+                    <!-- Card: Asset -->
+                    <div class="kpi-card">
+                        <div class="kpi-label">ASSET</div>
+                        <div class="kpi-big">DOGE</div>
+                        <div class="kpi-sub">Bitcoin</div>
+                    </div>
+
+                    <!-- Card: Price -->
+                    <div class="kpi-card">
+                        <div class="kpi-row-top">
+                            <span class="kpi-label">PRICE</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e"
+                                stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                        </div>
+                        <div class="kpi-price" id="priceDisplay">$0.1465 <span class="green-sm">+3.93%</span></div>
+                        <div class="kpi-sub green">↗ +$13.78</div>
+                    </div>
+
+                    <!-- Card: Sentiment -->
+                    <div class="kpi-card">
+                        <div class="kpi-label">SENTIMENT</div>
+                        <div class="kpi-big green">STRONGLY BULLISH</div>
+                        <div class="badge-orange">⬤ MOMENTUM PHASE</div>
+                    </div>
+
+                    <!-- Card: Hype Score -->
+                    <div class="kpi-card kpi-hype">
+                        <div class="kpi-row-top">
+                            <span class="kpi-label">HYPE SCORE &nbsp;↗ -106h&nbsp;</span>
+                            <span class="kpi-label">7D</span>
+                        </div>
+                        <div class="mini-chart-wrap"><canvas id="miniHypeChart"></canvas></div>
+                        <div class="hype-tags">
+                            <span class="htag htag-green">SENTIMENT</span>
+                            <span class="htag htag-orange">CAUTIOUS</span>
+                            <span class="htag htag-yellow">HIGH HIGH</span>
+                        </div>
+                    </div>
+
+                    <!-- Card: Watchlist snippet (partially visible in image) -->
+                    <div class="kpi-card kpi-watch-mini">
+                        <div class="kpi-label">WAT...</div>
+                        <div id="watchSnip">
+                            <div class="wsnip-row"><span class="green">⬆ PEPE</span><span class="wsnip-val">+76%</span>
+                                <span class="red">~ SHIB Sentiment Shifted</span>
+                            </div>
+                            <div class="wsnip-row"><span>↗ SOL</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHART + HYPE BREAKDOWN -->
+                <div class="chart-hype-row">
+                    <!-- Main Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <span class="section-label">DOGE PRICE &amp; HYPE BREAKDOWN</span>
+                            <div class="time-tabs">
+                                <span class="ttab">1H</span>
+                                <span class="ttab active">1D</span>
+                                <span class="ttab">7D</span>
+                            </div>
+                        </div>
+                        <div class="chart-container" id="mainChartContainer"></div>
+                        <div class="volume-chart-container" id="volumeContainer"></div>
+                    </div>
+
+                    <!-- Hype Breakdown Panel -->
+                    <div class="hype-panel">
+                        <div class="hype-score-line">
+                            <span class="hype-lbl">Hype Score:</span>
+                            <span class="hype-num">82</span>
+                            <span class="hype-denom">/100</span>
+                        </div>
+                        <div class="hype-stats">
+                            <div class="hstat"><span>Mention Growth</span><span class="green">+41%</span></div>
+                            <div class="hstat"><span>Engagement Spike</span><span class="green">+27%</span></div>
+                            <div class="hstat"><span>Sentiment Strength</span><span class="green">+0.65</span></div>
+                            <div class="hstat"><span>Volume Spike</span><span class="green">+18%</span></div>
+                        </div>
+                        <div class="hype-score-line second">
+                            <span class="hype-lbl">Hype Score:</span>
+                            <span class="hype-num">82</span>
+                            <span class="hype-denom">/100</span>
+                        </div>
+                        <div class="hype-bar-track">
+                            <div class="hype-bar-fill" style="width:82%"></div>
+                        </div>
+                        <div class="extreme-badge">EXTREME HYPE</div>
+                        <div class="tickers-row">
+                            <div class="ticker-item">
+                                <span class="tick-label">⊙ TIC</span>
+                                <span class="tick-coin green">DOGE</span>
+                                <span class="tick-v1">0.9%</span>
+                                <span class="tick-v2">● 0.54</span>
+                            </div>
+                            <div class="ticker-item">
+                                <span class="tick-label">⊙ MED</span>
+                                <span class="tick-coin muted">DOGE</span>
+                                <span class="tick-v1">0.61</span>
+                                <span class="tick-v2">● 0.54</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Explanation -->
+                <div class="ai-card">
+                    <div class="ai-title" style="display:flex;align-items:center;">AI Explanation
+                        <span id="personalityBadge" data-pid="conservative">🛡 Conservative Analyst</span>
+                    </div>
+                    <p class="ai-body" id="aiExplBody">DOGE has surged due to a <strong class="green">41%</strong>
+                        increase in Twitter
+                        mentions, <strong class="green">65%</strong> positive sentiment, an engagement spike, and price
+                        trading above 20 EMA with strong short-term hype correlation <strong
+                            class="green">(0.78)</strong> &gt;&gt; <span class="icon-row">⊙ ⊙</span></p>
+                </div>
+
+                <!-- BOTTOM ROW: 3 cards -->
+                <div class="bottom-row">
+                    <!-- Correlation Matrix -->
+                    <div class="bot-card">
+                        <div class="bot-label">CORRELATION MATRIX</div>
+                        <div class="matrix-head">
+                            <span>SM(i (HTME))</span>
+                            <span>L(ARB) (#329♦)</span>
+                            <span>21D</span>
+                        </div>
+                        <div class="matrix-r"><span class="mrow-lbl"><span class="green-dot"></span> Short term
+                                (18)</span><span class="mrow-hi green">⊕ 0.78</span><span class="green">0.78</span>
+                        </div>
+                        <div class="matrix-r"><span class="mrow-lbl"><span class="yellow-dot"></span> Medium term
+                                (18t)</span><span class="orange">0.61</span><span class="orange">0.61</span></div>
+                        <div class="matrix-r"><span class="mrow-lbl"><span class="orange-dot"></span> Long-term
+                                (75)</span><span class="orange">0.54</span><span class="orange">0.54</span></div>
+                        <div class="matrix-footer"><span>⊙ SHORT-TERM SOCIAL DRIVEN MOVE</span></div>
+                    </div>
+
+                    <!-- Hype Score Breakdown -->
+                    <div class="bot-card">
+                        <div class="bot-card-header">
+                            <span class="bot-label">HYPE SCORE BREAKDOWN</span>
+                            <div class="nav-arrows">◀ ▶</div>
+                        </div>
+                        <div class="hype2-score">Hype Score: <span class="orange">82</span> <span
+                                class="muted">/100</span></div>
+                        <div class="hstat"><span class="orange-arrow">↗</span><span>Mention Growth</span><span
+                                class="orange">+41%</span></div>
+                        <div class="hstat"><span class="orange-arrow">↗</span><span>Engagement Spike</span><span
+                                class="orange">+27%</span></div>
+                        <div class="hstat"><span class="muted">→</span><span>Sentiment Strength</span><span
+                                class="orange">+0.65</span></div>
+                        <div class="hstat"><span class="muted">↗</span><span>Volume Spike</span><span
+                                class="orange">+18%</span></div>
+                    </div>
+
+                    <!-- Technical Confirmation -->
+                    <div class="bot-card bot-card-tech">
+                        <div class="bot-label">TECHNICAL CONFIRMATION</div>
+                        <div class="tech-status">BULLISH CONFIRMED</div>
+                        <ul class="tech-list">
+                            <li><span class="green">✓</span> Price Above 20 EMA</li>
+                            <li><span class="green">✓</span> Volume Spike Detected</li>
+                            <li><span class="green">✓</span> RSI in Bullish Range</li>
+                        </ul>
+                        <div class="tech-footer">
+                            <span class="green">✓ CONFIDENCE: <strong id="aiConfidencePct">82%</strong></span>
+                            <button class="buy-btn" onclick="window.smApp && smApp.confirmTrade('BUY')">BUY</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER TABS -->
+                <div class="footer-tabs" id="footerTabs">
+                    <span class="ftab active" data-tab="correlation">CORRELATION MATRIX</span>
+                    <span class="ftab" data-tab="backtest">BACKTESTING</span>
+                    <span class="ftab" data-tab="system">⚡ SYSTEM</span>
+                    <span class="ftab" data-tab="signals">📡 SIGNALS <span class="badge-new">NEW</span></span>
+                </div>
+
+            </div>
+
+            <!-- ══ RIGHT PANEL ══ -->
+            <div class="right-panel">
+
+                <!-- Your Own Assets -->
+                <div class="rpanel-card">
+                    <div class="rpanel-header">
+                        <span class="rpanel-title">Your Own Assets</span>
+                        <div class="time-tabs small">
+                            <span class="ttab">1H</span>
+                            <span class="ttab active">1D</span>
+                            <span class="ttab">7D</span>
+                        </div>
+                    </div>
+                    <div class="asset-row" id="ar-doge">
+                        <img src="https://cryptologos.cc/logos/dogecoin-doge-logo.png" class="asset-icon"
+                            onerror="this.style.display='none'" alt="">
+                        <span class="coin-letter-icon" style="background:#c2a633">🐶</span>
+                        <div class="asset-info">
+                            <div class="asset-name">DOGE <span class="green">$0.1465</span></div>
+                            <div class="asset-sub">Bitcoin</div>
+                        </div>
+                        <div class="asset-right">
+                            <div class="asset-price">$0.1465</div>
+                            <div class="asset-change green">+6.99% ↗</div>
+                        </div>
+                        <button class="wl-arrow-btn">➤</button>
+                    </div>
+                    <div class="asset-row">
+                        <span class="coin-letter-icon" style="background:#00cc44">🐸</span>
+                        <div class="asset-info">
+                            <div class="asset-name">PEPE <span class="green">$0.0000156</span></div>
+                            <div class="asset-sub">Sentiment</div>
+                        </div>
+                        <div class="asset-right">
+                            <div class="asset-chip orange">L 584</div>
+                            <div class="asset-change green">+4.57% ↗</div>
+                        </div>
+                        <button class="wl-arrow-btn">➤</button>
+                    </div>
+                    <div class="asset-row">
+                        <span class="coin-letter-icon" style="background:#9945FF">◎</span>
+                        <div class="asset-info">
+                            <div class="asset-name">SOL <span>$143.90</span></div>
+                            <div class="asset-sub">Solana</div>
+                        </div>
+                        <div class="asset-right">
+                            <div class="asset-chip green-chip">↗ +99</div>
+                            <div class="asset-change green">+4.89% ↗</div>
+                        </div>
+                        <button class="wl-arrow-btn">➤</button>
+                    </div>
+                    <div class="asset-row">
+                        <span class="coin-letter-icon" style="background:#e84142">A</span>
+                        <div class="asset-info">
+                            <div class="asset-name">AVAX <span>$39.71</span></div>
+                            <div class="asset-sub">Avalanche</div>
+                        </div>
+                        <div class="asset-right">
+                            <div class="asset-chip muted-chip">~ +76</div>
+                            <div class="asset-change red">-7.13% ↓</div>
+                        </div>
+                        <button class="wl-arrow-btn">➤</button>
+                        <span class="alert-dot">⚠</span>
+                    </div>
+                </div>
+
+                <!-- Query Chatbot -->
+                <div class="rpanel-card">
+                    <div class="rpanel-title small-title">QUERY CHATBOT</div>
+                    <div class="chat-window" id="chatWindow">
+                        <div class="chat-msg bot">Bot: How can I help with your market analysis?</div>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="Ask a market question...">
+                        <button class="chat-send" id="chatSend">➤</button>
+                    </div>
+                </div>
+
+                <!-- Live Feed -->
+                <div class="rpanel-card">
+                    <div class="rpanel-title small-title">LIVE FEED</div>
+                    <div class="feed-list" id="feedList">
+                        <div class="feed-item">
+                            <span class="feed-icon green">↗</span>
+                            
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-icon orange">🔔</span>
+                            <div class="feed-body">
+                            </div>
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-icon muted">👤</span>
+                            <div class="feed-body">
+                                <div class="feed-text">Prices are sourced from Twelve Data with CoinDesk fallback</div>
+                                <div class="feed-time">live status</div>
+                            </div>
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-icon muted">⊙</span>
+                            <div class="feed-body">
+                                <div class="feed-text">cryptocurrency.cv provides the live feed layer</div>
+                                <div class="feed-time">live status</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Footer -->
+                <div class="rpanel-footer">
+                    <span class="muted" style="font-family:var(--mono);font-size:10px">⊙ SENTI-ENGINE v3</span>
+                    <span class="green font-bold" id="momentumPhaseLabel">MOMENTUM PHASE</span>
+                </div>
+
+            </div>
+
+        </div><!-- /body-grid -->
+    </div><!-- /app-shell -->
+
+    <script src="twelve-data.js"></script>
+    <script src="coindesk-data.js"></script>
+    <script src="crypto-news-data.js"></script>
+    <script src="app.js"></script>
+    <script src="cursor.js"></script>
+    <script src="settings.js"></script>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Asset Search Modal -->
+    <div class="search-overlay" id="searchOverlay" onclick="handleSearchOverlayClick(event)">
+        <div class="search-modal">
+            <div class="search-input-row">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" id="searchMainInput" class="search-main-input"
+                    placeholder="Search assets — DOGE, BTC, ETH, SOL..." autocomplete="off"
+                    oninput="filterSearchAssets(this.value)">
+                <span class="search-shortcut">Esc</span>
+            </div>
+            <div class="search-results" id="searchResults"><!-- filled by app.js --></div>
+            <div class="search-footer">
+                <span class="search-hint"><kbd>↑↓</kbd> Navigate</span>
+                <span class="search-hint"><kbd>Enter</kbd> Select</span>
+                <span class="search-hint"><kbd>Esc</kbd> Close</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/babel" data-type="module">
+        
+// --- TRADER DROPDOWN INJECTION ---
+(() => {
+  const { useState, useEffect, useRef } = React;
+  const { motion, AnimatePresence } = window.Motion;
+
+
+
+// Inline SVG icon components — no CDN dependency
+const LayoutDashboard = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+  </svg>
+);
+const Briefcase = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect x="2" y="7" width="20" height="14" rx="2"/>
+    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+    <line x1="12" y1="12" x2="12" y2="12.01"/>
+  </svg>
+);
+const Star = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+);
+const UserPlus = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <line x1="19" y1="8" x2="19" y2="14"/>
+    <line x1="22" y1="11" x2="16" y2="11"/>
+  </svg>
+);
+const Bell = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+const Zap = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>
+);
+const Settings = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+);
+const LogOut = ({ size=20, style={} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+
+function DropdownItem({ icon: Icon, label, onClick, highlight }) {
+  const iconColor = highlight ? '#22c55e' : '#94a3b8';
+  return (
+    <motion.button
+      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className="w-full flex items-center gap-[18px] px-5 py-[13px] transition-colors"
+      style={{ color: '#e2e8f0' }}
+    >
+      <Icon size={20} style={{ color: iconColor, flexShrink: 0 }} />
+      <span className="text-[15px] font-medium tracking-wide">{label}</span>
+    </motion.button>
+  );
+}
+
+function TraderDropdown() {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const IconDashboard = LayoutDashboard;
+  const IconPortfolio = Briefcase;
+  const IconWatchlist = Star;
+  const IconBrokers   = UserPlus;
+  const IconAlerts    = Bell;
+  const IconSignals   = Zap;
+  const IconSettings  = Settings;
+  const IconLogout    = LogOut;
+
+  return (
+    <div className="relative z-[9999]" ref={dropdownRef}>
+      
+      {/* Target Trigger Button */}
+      <motion.button 
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className="user-avatar-pill"
+      >
+        <div className="user-avatar-circle">T</div>
+        <span className="user-avatar-name">Trader</span>
+      </motion.button>
+
+      {/* Dropdown Panel */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -5, scale: 0.95 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+            className="absolute right-0 top-11 w-[240px] bg-[#0f172a] border border-[#1e293b] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden z-[9999]"
+            style={{ transformOrigin: "top right" }}
+          >
+            {/* Header: User Summary */}
+            <div className="px-5 py-[14px] flex items-center gap-3">
+              <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center font-bold text-[18px] text-[#022c22] shadow-[0_0_8px_rgba(34,197,94,0.3)] bg-[#22c55e]">
+                T
+              </div>
+              <h3 className="text-slate-200 font-semibold text-[16px] tracking-wide">Trader</h3>
+            </div>
+            
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconDashboard} label="Dashboard" onClick={() => window.location.href='index.html'} />
+              <DropdownItem icon={IconPortfolio} label="Portfolio" onClick={() => {}} />
+              <DropdownItem icon={IconWatchlist} label="Watchlist" onClick={() => {}} />
+              <DropdownItem icon={IconBrokers} label="Followed Brokers" onClick={() => window.location.href='broker-insights-react.html'} />
+              <DropdownItem icon={IconAlerts} label="Alerts" onClick={() => {}} />
+              <DropdownItem icon={IconSignals} label="AI Signals" highlight onClick={() => {}} />
+            </div>
+
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconSettings} label="Settings" onClick={() => {}} />
+            </div>
+
+            <div className="h-[1px] w-full bg-[#1e293b]" />
+
+            <div className="py-1.5">
+              <DropdownItem icon={IconLogout} label="Logout" onClick={() => {}} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+
+  // Ensure the DOM is ready for React to mount the dropdown
+  setTimeout(() => {
+    const rootEl = document.getElementById('trader-dropdown-root');
+    if (rootEl) {
+      const root = ReactDOM.createRoot(rootEl);
+      root.render(<TraderDropdown />);
+    }
+  }, 100);
+
+})();
+
+    </script>
+</body>
+
+<!-- ═══ SETTINGS PANEL ═══ -->
+<div id="settingsOverlay" class="settings-overlay"></div>
+<aside id="settingsPanel" class="settings-panel">
+    <!-- filled by settings.js buildSettingsPanel() -->
+</aside>
+
+<!-- ═══ TRADE CONFIRMATION POPUP ═══ -->
+<div id="tradeConfirmOverlay" class="trade-confirm-overlay">
+    <div class="trade-confirm-modal">
+        <div class="tcm-header">Confirm <span id="tcm-action">BUY</span> Order</div>
+        <div class="tcm-rows">
+            <div class="tcm-row"><span class="lbl">Signal</span><span class="val" id="tcm-signal">BUY</span></div>
+            <div class="tcm-row"><span class="lbl">Confidence</span><span class="val" id="tcm-confidence">82%</span>
+            </div>
+            <div class="tcm-row"><span class="lbl">Risk Level</span><span class="val" id="tcm-risk">⚖ Medium</span>
+            </div>
+            <div class="tcm-row"><span class="lbl">Asset</span><span class="val">DOGE/USD</span></div>
+        </div>
+        <div class="tcm-actions">
+            <button class="tcm-cancel" onclick="smApp.cancelTrade()">Cancel</button>
+            <button class="tcm-confirm" onclick="smApp.executeTrade()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script src="system.js"></script>
+<script src="interactions.js"></script>
+<!-- <script>
+    /* Page-exit fade transition — shared between Dashboard & Analysis */
+    document.addEventListener('click', function (e) {
+        const a = e.target.closest('a[href]');
+        if (!a) return;
+        const href = a.getAttribute('href');
+        if (!href || href === '#' || href.startsWith('javascript')) return;
+        if (a.target === '_blank') return;
+        e.preventDefault();
+        document.body.style.transition = 'opacity .22s ease, transform .22s ease';
+        document.body.style.opacity = '0';
+        document.body.style.transform = 'translateY(-8px)';
+        setTimeout(() => { window.location.href = href; }, 230);
+    });
+</script> -->
+
+</html>
