@@ -135,10 +135,10 @@ function collectApiOrigins(runtime = {}) {
 
     pushOrigin(runtime.baseUrl);
     pushOrigin(localStorage.getItem('smApiBaseUrl'));
-    pushOrigin('http://127.0.0.1:8000');
     pushOrigin('https://sentimarket-api.onrender.com');
-    pushOrigin('http://127.0.0.1:5000');
-    pushOrigin('http://localhost:5000');
+    pushOrigin('https://sentimarket-api.onrender.com');
+    pushOrigin('https://sentimarket-api.onrender.com');
+    pushOrigin('https://sentimarket-api.onrender.com');
     if (window.location.protocol.startsWith('http')) pushOrigin(window.location.origin);
 
     return [...new Set(origins)];
@@ -177,7 +177,7 @@ function resolveDashboardApiConfig() {
     const tiingo = runtime.tiingo || {};
     const configuredProvider = runtime.provider || localStorage.getItem('smDataProvider') || 'twelve';
     const apiOrigins = collectApiOrigins(runtime);
-    const baseUrl = apiOrigins[0] || 'http://127.0.0.1:8000';
+    const baseUrl = apiOrigins[0] || 'https://sentimarket-api.onrender.com';
 
     return {
         baseUrl: String(baseUrl || '').replace(/\/$/, ''),
