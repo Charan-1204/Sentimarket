@@ -11,7 +11,7 @@
                 runtime.baseUrl,
                 localStorage.getItem('smApiBaseUrl'),
                 'http://127.0.0.1:8000',
-                'http://localhost:8000',
+                'https://sentimarket-api.onrender.com',
                 'http://127.0.0.1:5000',
                 'http://localhost:5000',
                 window.location.protocol.startsWith('http') ? window.location.origin : '',

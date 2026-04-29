@@ -136,7 +136,7 @@ function collectApiOrigins(runtime = {}) {
     pushOrigin(runtime.baseUrl);
     pushOrigin(localStorage.getItem('smApiBaseUrl'));
     pushOrigin('http://127.0.0.1:8000');
-    pushOrigin('http://localhost:8000');
+    pushOrigin('https://sentimarket-api.onrender.com');
     pushOrigin('http://127.0.0.1:5000');
     pushOrigin('http://localhost:5000');
     if (window.location.protocol.startsWith('http')) pushOrigin(window.location.origin);
