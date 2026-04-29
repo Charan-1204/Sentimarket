@@ -3,9 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime
 import logging
-from backend.config import settings
-from backend.routers import health, market, sentiment, hype, correlations, news
-from backend.routers import feed, watchlists
+from config import settings
+from routers import health, market, sentiment, hype, correlations, news
+from routers import feed, watchlists
 
 # Configure logging
 logging.basicConfig(
