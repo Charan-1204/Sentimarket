@@ -92,6 +92,57 @@ const ASSETS = {
     AVAX: { price: 38.9, chg: -1.24, base: 36 },
 };
 
+function getPrimaryProvider() {
+    return window.SentiPrimaryData || null;
+}
+
+function getFallbackProvider() {
+    return window.SentiMarketData || null;
+}
+
+async function getCandlesWithFallback(asset, tf) {
+    const primary = getPrimaryProvider();
+    const fallback = getFallbackProvider();
+    const fallbackOptions = fallback && typeof fallback.historyOptionsForTimeframe === 'function'
+        ? fallback.historyOptionsForTimeframe(tf)
+        : {};
+
+    if (primary && typeof primary.getCandles === 'function') {
+        try {
+            const rows = await primary.getCandles(asset, { timeframe: tf });
+            if (Array.isArray(rows) && rows.length) return rows;
+        } catch (error) {
+            console.warn(`Primary history unavailable for ${asset}:`, error?.message || error);
+        }
+    }
+
+    if (fallback && typeof fallback.getCandles === 'function') {
+        return fallback.getCandles(asset, fallbackOptions);
+    }
+
+    throw new Error('Market data client unavailable');
+}
+
+async function getLatestBatchWithFallback(symbols) {
+    const primary = getPrimaryProvider();
+    const fallback = getFallbackProvider();
+
+    if (primary && typeof primary.getLatestBatch === 'function') {
+        try {
+            const rows = await primary.getLatestBatch(symbols);
+            if (Array.isArray(rows) && rows.length) return rows;
+        } catch (error) {
+            console.warn('Primary live batch unavailable:', error?.message || error);
+        }
+    }
+
+    if (fallback && typeof fallback.getLatestBatch === 'function') {
+        return fallback.getLatestBatch(symbols);
+    }
+
+    throw new Error('Market data client unavailable');
+}
+
 function fmtPrice(asset, p) {
     if (p < 0.0001) return '$' + p.toFixed(8);
     if (p < 1) return '$' + p.toFixed(4);
@@ -103,12 +154,7 @@ function fmtPrice(asset, p) {
    §3  DATA GENERATION + EMA
 ══════════════════════════════════════ */
 async function loadCoinDeskData(asset, tf) {
-    const provider = window.SentiPrimaryData || window.SentiMarketData;
-    if (!provider) throw new Error('Market data client unavailable');
-    const options = window.SentiMarketData?.historyOptionsForTimeframe(tf) || {};
-    const rows = provider === window.SentiPrimaryData
-        ? await provider.getCandles(asset, { timeframe: tf })
-        : await provider.getCandles(asset, options);
+    const rows = await getCandlesWithFallback(asset, tf);
     const ohlcv = rows.map(row => ({ time: row.time, open: row.open, high: row.high, low: row.low, close: row.close }));
     const vols = rows.map(row => ({
         time: row.time,
@@ -736,10 +782,8 @@ function startLive() {
         const now = Date.now();
         if (now - lastPriceUpdate < 800) return; // debounce
         lastPriceUpdate = now;
-        const provider = window.SentiPrimaryData || window.SentiMarketData;
-        if (!provider) return;
         try {
-            const rows = await provider.getLatestBatch(Object.keys(ASSETS));
+            const rows = await getLatestBatchWithFallback(Object.keys(ASSETS));
             rows.forEach(row => {
                 if (!ASSETS[row.symbol]) return;
                 ASSETS[row.symbol].price = row.price;
