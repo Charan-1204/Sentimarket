@@ -1698,7 +1698,7 @@ function startLiveFeed() {
         );
 
         index++;
-    }, 5000);
+    }, 30000);
 }
 
     const syncFeed = async () => {
