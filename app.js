@@ -1694,8 +1694,7 @@ function startLiveFeed() {
         addFeedItem(
             item.text,
             item.type,
-            "LIVE",
-            "demo signal"
+            "LIVE"
         );
 
         index++;
