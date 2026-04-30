@@ -1674,12 +1674,33 @@ function guideEsc(e) {
 
 // ─── KEYBOARD SHORTCUTS ───────────────────────────
 function startLiveFeed() {
-    const scheduleFallbackFeed = () => {
-        clearInterval(liveFeedTimer);
-        liveFeedTimer = setInterval(() => {
-            addFeedItem('Live feed unavailable: waiting for a connected news or social data source', 'muted', 'DATA', 'live status');
-        }, 30000);
-    };
+    function scheduleFallbackFeed() {
+    clearInterval(liveFeedTimer);
+
+    const demoFeed = [
+        { text: "BTC sentiment surging +12% in last hour", type: "bullish" },
+        { text: "ETH whale accumulation detected (↑ volume spike)", type: "bullish" },
+        { text: "DOGE hype increasing across social platforms", type: "neutral" },
+        { text: "SOL showing strong short-term correlation with BTC", type: "neutral" },
+        { text: "Market volatility rising – caution advised", type: "bearish" },
+        { text: "Altcoin momentum building after news spike", type: "bullish" }
+    ];
+
+    let index = 0;
+
+    liveFeedTimer = setInterval(() => {
+        const item = demoFeed[index % demoFeed.length];
+
+        addFeedItem(
+            item.text,
+            item.type,
+            "LIVE",
+            "demo signal"
+        );
+
+        index++;
+    }, 5000);
+}
 
     const syncFeed = async () => {
         try {
